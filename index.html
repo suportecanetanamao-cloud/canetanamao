@@ -39,7 +39,7 @@ details[open] .plus{transform:rotate(45deg)}
 <svg viewBox="0 0 100 100" width="40" height="40" aria-hidden="true"><rect width="100" height="100" rx="26" fill="#1D3FD8"></rect><path d="M66 31 A 25 25 0 1 0 66 69" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"></path><circle cx="74" cy="50" r="8.5" fill="#FFC727"></circle></svg>
 <div style="display: flex; flex-direction: column; font-weight: 800; font-size: 18px; line-height: 1.02"><span>caneta</span><span style="color: #1D3FD8">na mão</span></div>
 </div>
-<a href="#oferta" class="cta" style="background: #FFC727; color: #0B1747; font-weight: 800; text-decoration: none; padding: 12px 20px; border-radius: 999px; font-size: 15px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Quero o kit</a>
+<div style="display: flex; gap: 8px; align-items: center"><a href="#amostra" style="color: #1D3FD8; font-weight: 700; text-decoration: none; padding: 12px 10px; font-size: 15px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Amostra grátis</a><a href="#oferta" class="cta" style="background: #FFC727; color: #0B1747; font-weight: 800; text-decoration: none; padding: 12px 20px; border-radius: 999px; font-size: 15px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Quero o kit</a></div>
 </div>
 </div>
 
@@ -56,6 +56,7 @@ details[open] .plus{transform:rotate(45deg)}
 <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
 <a href="#oferta" class="cta" style="background: #FFC727; color: #0B1747; font-weight: 800; text-decoration: none; padding: 18px 28px; border-radius: 14px; font-size: 18px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Quero estudar com o kit</a>
 <div style="display: flex; flex-direction: column; font-size: 14px; color: #C9D2F2"><span>de <s>R$ 97</s> por</span><b style="font-size: 26px; color: #FFFFFF; line-height: 1.1">R$ 47,90</b></div>
+<a href="#amostra" style="color: #FFC727; font-weight: 700; font-size: 16px; text-decoration: underline; text-underline-offset: 4px; align-self: flex-start">Ainda em dúvida? Receba uma amostra grátis</a>
 </div>
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 8px; max-width: 520px">
 <div style="border-top: 2px solid #FFC727; padding-top: 10px"><b style="font-size: 28px; display: block">345</b><span style="font-size: 13px; color: #C9D2F2">questões reais da ACCESS</span></div>
@@ -152,15 +153,87 @@ details[open] .plus{transform:rotate(45deg)}
 </div>
 
 <!-- AMOSTRA -->
-<div style="max-width: 1120px; margin: 0 auto; padding: 0 20px 64px">
-<div style="background: #FFFFFF; border: 2px solid #1D3FD8; border-radius: 24px; padding: 32px 28px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between">
-<div style="flex: 1 1 420px; min-width: 0">
-<h2 style="margin: 0 0 6px; font-size: clamp(22px, 2.8vw, 28px); font-weight: 800">Quer ver antes de comprar?</h2>
-<p style="margin: 0; color: #3B4568; font-size: 17px">Baixe grátis um assunto completo (Sinais vitais, o que mais cai) com as 16 questões reais e o gabarito comentado.</p>
+<div id="amostra" style="max-width: 1120px; margin: 0 auto; padding: 0 20px 64px">
+<div style="background: #FFFFFF; border: 2px solid #1D3FD8; border-radius: 24px; padding: 32px 28px; display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+<div style="flex: 1 1 360px; min-width: 0">
+<span style="background: #FFC727; font-weight: 800; font-size: 13px; padding: 5px 12px; border-radius: 999px">GRÁTIS</span>
+<h2 style="margin: 12px 0 8px; font-size: clamp(22px, 2.8vw, 30px); font-weight: 800; line-height: 1.15">Quer ver antes de comprar?</h2>
+<p style="margin: 0 0 10px; color: #3B4568; font-size: 17px">Receba grátis um assunto completo (Sinais vitais, o que mais cai em Específicos) com as 16 questões reais e o gabarito comentado.</p>
+<p style="margin: 0; color: #3B4568; font-size: 15px">Você baixa na hora e também recebe no seu e-mail.</p>
 </div>
-<a href="amostra-gratis-tecnico-enfermagem.pdf" target="_blank" rel="noopener" style="border: 2px solid #1D3FD8; color: #1D3FD8; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; font-size: 16px; min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center">Baixar a amostra grátis</a>
+<form class="form-amostra" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px" novalidate>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">Nome<input name="nome" required autocomplete="name" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">E-mail<input name="email" type="email" required autocomplete="email" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">WhatsApp com DDD<input name="whatsapp" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(18) 99999-9999" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">Qual cargo você vai prestar?<select name="cargo" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px; background: #fff"><option>Técnico em Enfermagem (30h)</option><option>Técnico em Enfermagem ESF</option><option>Os dois</option><option>Outro cargo</option></select></label>
+<input name="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position: absolute; left: -9999px; width: 1px; height: 1px">
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: #3B4568"><input name="aceite" type="checkbox" required style="width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0">Aceito receber a amostra e avisos sobre o concurso de Birigui por e-mail e WhatsApp. Posso pedir para sair quando quiser.</label>
+<button type="submit" class="cta" style="background: #FFC727; color: #0B1747; font: inherit; font-weight: 800; font-size: 17px; border: 0; padding: 16px 22px; border-radius: 14px; min-height: 48px; cursor: pointer">Quero a amostra grátis</button>
+<p class="amostra-msg" role="status" style="margin: 0; font-size: 15px; color: #B42318"></p>
+</form>
+<div class="amostra-ok" hidden style="flex: 1 1 340px; min-width: 0; background: #E8EDFD; border-radius: 16px; padding: 24px; flex-direction: column; gap: 12px">
+<b style="font-size: 20px">Pronto! Sua amostra está liberada.</b>
+<span style="color: #3B4568">Também enviamos para o seu e-mail. Se não aparecer, veja no spam ou em promoções.</span>
+<a href="amostra-gratis-tecnico-enfermagem.pdf" target="_blank" rel="noopener" style="background: #1D3FD8; color: #FFFFFF; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; text-align: center">Baixar a amostra agora</a>
 </div>
 </div>
+</div>
+<div id="pop" hidden role="dialog" aria-modal="true" aria-labelledby="pop-t" style="position: fixed; inset: 0; background: rgba(11,23,71,.6); z-index: 50; align-items: center; justify-content: center; padding: 16px">
+<div style="background: #FFFFFF; border-radius: 20px; width: 100%; max-width: 440px; max-height: calc(100vh - 32px); overflow-y: auto; padding: 24px; box-sizing: border-box; position: relative">
+<button type="button" id="pop-x" aria-label="Fechar" style="position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: 0; background: transparent; font-size: 28px; line-height: 1; color: #5B6584; cursor: pointer">&times;</button>
+<span style="background: #FFC727; font-weight: 800; font-size: 13px; padding: 5px 12px; border-radius: 999px">GRÁTIS</span>
+<h2 id="pop-t" style="margin: 12px 0 6px; font-size: 24px; font-weight: 800; line-height: 1.15">Antes de ir: quer uma amostra grátis?</h2>
+<p style="margin: 0 0 16px; color: #3B4568">O assunto que mais cai em Específicos completo + 16 questões reais da banca ACCESS com gabarito comentado.</p>
+<form class="form-amostra" style="display: flex; flex-direction: column; gap: 12px" novalidate>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">Nome<input name="nome" required autocomplete="name" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">E-mail<input name="email" type="email" required autocomplete="email" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">WhatsApp com DDD<input name="whatsapp" type="tel" required inputmode="tel" autocomplete="tel" placeholder="(18) 99999-9999" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">Qual cargo você vai prestar?<select name="cargo" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px; background: #fff"><option>Técnico em Enfermagem (30h)</option><option>Técnico em Enfermagem ESF</option><option>Os dois</option><option>Outro cargo</option></select></label>
+<input name="site" tabindex="-1" autocomplete="off" aria-hidden="true" style="position: absolute; left: -9999px; width: 1px; height: 1px">
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: #3B4568"><input name="aceite" type="checkbox" required style="width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0">Aceito receber a amostra e avisos sobre o concurso de Birigui por e-mail e WhatsApp. Posso pedir para sair quando quiser.</label>
+<button type="submit" class="cta" style="background: #FFC727; color: #0B1747; font: inherit; font-weight: 800; font-size: 17px; border: 0; padding: 16px 22px; border-radius: 14px; min-height: 48px; cursor: pointer">Quero a amostra grátis</button>
+<p class="amostra-msg" role="status" style="margin: 0; font-size: 15px; color: #B42318"></p>
+<button type="button" class="pop-nao" style="background: transparent; border: 0; color: #5B6584; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; min-height: 44px">Agora não, quero ver o preço</button>
+</form>
+<div class="amostra-ok" hidden style="background: #E8EDFD; border-radius: 16px; padding: 20px; flex-direction: column; gap: 12px">
+<b style="font-size: 20px">Pronto! Sua amostra está liberada.</b>
+<span style="color: #3B4568">Também enviamos para o seu e-mail. Se não aparecer, veja no spam ou em promoções.</span>
+<a href="amostra-gratis-tecnico-enfermagem.pdf" target="_blank" rel="noopener" style="background: #1D3FD8; color: #FFFFFF; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; text-align: center">Baixar a amostra agora</a>
+</div>
+</div>
+</div>
+<script>
+(function(){
+  function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+  function ss(k,v){try{if(v===undefined)return sessionStorage.getItem(k);sessionStorage.setItem(k,v);}catch(e){return null;}}
+  var pop=document.getElementById('pop');
+  function fecha(){pop.style.display='none';}
+  function abre(){ if(ls('cnm_lead')||ss('cnm_pop'))return; ss('cnm_pop','1'); pop.hidden=false; pop.style.display='flex'; }
+  document.getElementById('pop-x').onclick=fecha;
+  pop.querySelector('.pop-nao').onclick=fecha;
+  pop.addEventListener('click',function(e){if(e.target===pop)fecha();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&pop.style.display==='flex')fecha();});
+  setTimeout(abre,25000);
+  document.addEventListener('mouseout',function(e){ if(!e.relatedTarget&&e.clientY<=0) abre(); });
+  document.querySelectorAll('.form-amostra').forEach(function(f){
+    var msg=f.querySelector('.amostra-msg'), ok=f.parentNode.querySelector('.amostra-ok'), b=f.querySelector('button[type=submit]');
+    f.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var d={nome:f.nome.value.trim(), email:f.email.value.trim(), whatsapp:f.whatsapp.value, cargo:f.cargo.value, aceite:f.aceite.checked, site:f.site.value};
+      if(!d.nome){msg.textContent='Digite seu nome.';return;}
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){msg.textContent='Confira seu e-mail.';return;}
+      if(d.whatsapp.replace(/\D/g,'').length<10){msg.textContent='Confira seu WhatsApp com DDD.';return;}
+      if(!d.aceite){msg.textContent='Marque a caixinha de aceite para receber a amostra.';return;}
+      msg.textContent=''; b.disabled=true; b.textContent='Enviando...';
+      var libera=function(){ ls('cnm_lead','1'); f.style.display='none'; ok.hidden=false; ok.style.display='flex'; };
+      fetch('https://entrega-caneta.vercel.app/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+        .then(function(r){return r.json().then(function(j){return {s:r.status,j:j};});})
+        .then(function(x){ if(x.s>=400){msg.textContent=x.j.msg||'Confira seus dados.'; b.disabled=false; b.textContent='Quero a amostra grátis';} else libera(); })
+        .catch(libera);
+    });
+  });
+})();
+</script>
 
 <!-- OFERTA -->
 <div id="oferta" style="background: #0B1747; color: #FFFFFF">
