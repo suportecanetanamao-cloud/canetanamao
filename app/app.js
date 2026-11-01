@@ -6,6 +6,8 @@ const DAY = 864e5, REV = [1, 7, 30];
 const L = "ABCD";
 const $app = document.getElementById("app");
 let sb = null, user = null, cargos = [], cargo = null, C = null, P = null, BY = {}, ASQ = {}, saveT = null;
+let ACC = [], TRIAL = false, PLANO = false, BASES = [];
+const base = c => c.replace(/-(amostra|plano)$/, "");
 let SES = null; // sessão de questões em andamento
 
 // ---------- utilidades ----------
@@ -25,7 +27,7 @@ const LOGO = '<svg viewBox="0 0 100 100" width="34" height="34"><rect width="100
 // ---------- dados ----------
 async function loadContent(cg) {
   const key = "cnm-content-" + cg;
-  if (DEMO) return (await fetch("data/" + cg + ".json")).json();
+  if (DEMO) return (await fetch("data/" + cg + ".json?v=" + Date.now())).json();
   let cache = null;
   try { cache = await caches.open("cnm-v1"); const r = await cache.match(key); if (r) { const j = await r.json(); if (j && j.questoes) { refreshContent(cg, cache, key); return j; } } } catch (e) { cache = null; }
   return refreshContent(cg, cache, key);
@@ -72,12 +74,13 @@ function chip(code) {
 }
 function asStats(code) {
   const ids = ASQ[code] || []; let f = 0, ok = 0;
+  if (AS[code] && AS[code].bloq) return { n: AS[code].nq || 0, f: 0, ok: 0 };
   ids.forEach(id => { const a = P.ans[id]; if (a) { f++; if (a.ok) ok++; } });
   return { n: ids.length, f, ok };
 }
 const wrongIds = () => Object.keys(P.ans).filter(id => P.ans[id] && !P.ans[id].ok && BY[id]);
 const redoToday = () => wrongIds().filter(id => day0(P.ans[id].t) < day0());
-function nextAs() { for (const c of (C.seq && C.seq.length ? C.seq : allAs().map(a => a.code))) if (!P.studied[c] && AS[c]) return AS[c]; return null; }
+function nextAs() { for (const c of (C.seq && C.seq.length ? C.seq : allAs().map(a => a.code))) if (!P.studied[c] && AS[c] && !AS[c].bloq) return AS[c]; return null; }
 let AS = {};
 
 // ---------- telas ----------
@@ -107,10 +110,12 @@ function viewHoje() {
     <div class="row" style="margin-top:10px;align-items:flex-end"><div class="grow"><div class="big">${dias}</div><div class="muted">dias para a prova · 14/02/2027</div></div>
     <div style="text-align:right"><div style="font-size:26px;font-weight:800">${pct(est, all.length)}%</div><div class="muted">do edital estudado</div></div></div>
     <div class="bar" style="margin-top:14px"><i style="width:${pct(est, all.length)}%"></i></div></div>
+  ${TRIAL ? trialBanner() : ""}
   <h2 class="sec">Para hoje</h2><div class="stack">${tasks}</div>
   <h2 class="sec">Seus números</h2>
   <div class="grid2"><div class="card stat"><b>${est}/${all.length}</b><span>assuntos estudados</span></div><div class="card stat"><b>${feitas}</b><span>questões feitas</span></div>
   <div class="card stat"><b>${feitas ? pct(acertos, feitas) + "%" : "–"}</b><span>de acertos</span></div><div class="card stat"><b>${wrongIds().length}</b><span>no caderno de erros</span></div></div>
+  ${TRIAL ? "" : `<a class="card task" href="#/progresso" style="margin-top:12px" onclick="setTimeout(()=>{const e=[...document.querySelectorAll('h2')].find(h=>h.textContent.includes('materiais'));e&&e.scrollIntoView()},80)"><div class="ic">📄</div><div class="grow"><div class="t">Meus PDFs</div><div class="muted">Apostila, caderno e bônus para ver ou imprimir</div></div><div class="go">›</div></a>`}
   <p class="muted" style="margin-top:18px">Ciclo de cada assunto: leia a teoria → faça as questões → revise em 1, 7 e 30 dias. O app agenda as revisões para você.</p>`);
 }
 
@@ -122,7 +127,26 @@ function viewRevisoes() {
   ${prox.length ? `<h2 class="sec">Próximas</h2>` + prox.map(a => asRow(a, new Date(revDue(a.code)).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }))).join("") : ""}`, backTop("Revisões", "", "#/hoje"));
 }
 
+function trialBanner() {
+  const livres = allAs().filter(a => !a.bloq).length, tot = allAs().length;
+  return `<div class="card trial"><div class="kick" style="color:var(--navy)">AMOSTRA GRÁTIS</div><div style="font-weight:800;font-size:17px;margin:4px 0">Você está testando o app: ${livres} de ${tot} assuntos liberados</div>
+  <div class="muted" style="color:var(--ink2)">No kit completo você tem todos os assuntos, as ${C.nq_total || ""} questões, simulados e os PDFs. Seu progresso continua de onde parou.</div>
+  <a class="btn b full" style="margin-top:12px" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Quero o kit completo</a></div>`;
+}
+function asRowBloq(a) {
+  return `<a class="as bloq" href="#/bloq/${a.code}"><div class="n">🔒</div><div class="grow"><div class="t">${esc(a.titulo)}</div>
+  <div class="m"><span class="chip lock">Kit completo</span><span>caiu em ${a.pct}% das provas</span><span>${a.nq || 0} questões</span></div></div></a>`;
+}
+function viewBloq(code) {
+  const a = AS[code]; if (!a) return go("#/estudar");
+  shell("estudar", `<div class="kick">${esc(a.matNome)} · assunto ${String(a.n).padStart(2, "0")}</div><h1 class="pg">${esc(a.titulo)}</h1>
+  <div class="card" style="text-align:center;padding:28px 18px"><div style="font-size:42px">🔒</div><div style="font-weight:800;font-size:18px;margin:8px 0">Este assunto faz parte do kit completo</div>
+  <p class="muted">Caiu em <b>${a.pct}%</b> das provas da banca ACCESS e tem <b>${a.nq || 0} questões</b> reais com gabarito comentado esperando por você.</p>
+  <a class="btn y full" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Desbloquear no kit completo</a>
+  <p class="muted" style="font-size:13px;margin-top:12px">Depois da compra, entre com o mesmo e-mail: tudo é liberado e o seu progresso continua.</p></div>`, backTop(a.titulo, a.matNome, "#/estudar/" + a.mat));
+}
 function asRow(a, when) {
+  if (a.bloq) return asRowBloq(a);
   const s = asStats(a.code), st = status(a.code);
   const ac = s.f ? ` · ${pct(s.ok, s.f)}% de acerto` : "";
   return `<a class="as ${st !== "new" ? "done" : ""}" href="#/a/${a.code}"><div class="n">${String(a.n).padStart(2, "0")}</div><div class="grow"><div class="t">${esc(a.titulo)}</div>
@@ -147,12 +171,13 @@ function watermark() {
 
 function viewAssunto(code) {
   const a = AS[code]; if (!a) return go("#/estudar");
+  if (a.bloq) return viewBloq(code);
   P.last = code; save();
   const st = status(code), s = asStats(code), n = P.rev[code] || 0;
   let act = "";
   if (st === "new") act = `<button class="btn y grow" id="bStudy">✓ Marcar como estudado</button>`;
   else if (st === "due") act = `<button class="btn y grow" id="bRev">✓ Concluir ${n + 1}ª revisão</button>`;
-  const qb = s.n ? `<a class="btn b grow" href="#/q/a/${code}">Questões (${s.n})</a>` : "";
+  const qb = s.n ? `<a class="btn b grow" href="#/q/a/${code}">Questões (${s.n}${TRIAL && a.nqk > s.n ? " de " + a.nqk : ""})</a>` : "";
   const info = st === "new" ? "" : `<div class="card" style="margin-bottom:12px"><div class="row"><div class="grow"><div style="font-weight:800">${st === "done" ? "Assunto revisado ✓" : st === "due" ? "Hora de revisar!" : "Próxima revisão em " + new Date(revDue(code)).toLocaleDateString("pt-BR")}</div><div class="muted">Estudado em ${new Date(P.studied[code]).toLocaleDateString("pt-BR")}${s.f ? ` · ${s.f}/${s.n} questões feitas · ${pct(s.ok, s.f)}% de acerto` : ""}</div></div></div><div class="rvl">${REV.map((d, i) => `<span class="${i < n ? "d" : ""}"></span>`).join("")}</div></div>`;
   shell("estudar", `${info}<div class="kick">${esc(a.matNome)} · assunto ${String(a.n).padStart(2, "0")}</div><h1 class="pg">${esc(a.titulo)}</h1>
   ${a.tags ? `<p class="muted" style="margin-top:-8px">${esc(a.tags)}</p>` : ""}
@@ -217,6 +242,7 @@ function summary() {
   const msg = pct(ok, r.length) >= 70 ? "Mandou bem! Na revisão, refaça só as erradas." : pct(ok, r.length) >= 50 ? "Bom caminho. As erradas foram para o seu caderno de erros." : "Volte na teoria e refaça as erradas amanhã.";
   const back = S.mode === "a" ? `<a class="btn w full" href="#/a/${S.arg}">Voltar ao assunto</a>` : `<a class="btn w full" href="#/hoje">Voltar ao início</a>`;
   shell("hoje", `<div class="card sum"><div class="kick">${esc(S.title)}</div><div class="big" style="margin-top:10px">${ok}/${r.length}</div><div class="muted">${pct(ok, r.length)}% de acertos</div><p>${msg}</p>
+  ${TRIAL && S.mode === "a" && AS[S.arg] && AS[S.arg].nqk > S.ids.length ? `<div class="card trial" style="margin-top:14px;text-align:left"><b>Gostou?</b> No kit completo este assunto tem ${AS[S.arg].nqk} questões, e o app inteiro tem ${C.nq_total || ""} questões em 44 assuntos.<a class="btn b full" style="margin-top:10px" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Quero o kit completo</a></div>` : ""}
   <div class="stack">${r.length - ok ? `<a class="btn y full" href="#/erros">Ver as erradas</a>` : ""}${back}</div></div>`, backTop("Resultado", "", "#/hoje"));
   SES = null;
 }
@@ -250,13 +276,38 @@ function viewProgresso() {
   const sims = (P.sims || []).slice(-5).reverse();
   shell("progresso", `<h1 class="pg">Meu progresso</h1>${mats}
   <h2 class="sec">Pontos fracos</h2>${weak.length ? weak.map(x => asRow(x.a)).join("") : '<p class="muted">Faça pelo menos 3 questões de um assunto para aparecer aqui.</p>'}
-  <h2 class="sec">Simulado</h2><div class="card"><div style="font-weight:800">40 questões, 10 de cada matéria, como na prova</div><p class="muted">Sorteadas do Caderno. Para passar: 20 acertos e pelo menos 1 em cada matéria.</p><a class="btn b full" href="#/q/sim/novo">Fazer um simulado</a>
+  <h2 class="sec">Meus materiais</h2>${materiais()}
+  <h2 class="sec">Simulado</h2><div class="card"><div style="font-weight:800">40 questões, 10 de cada matéria, como na prova</div><p class="muted">Sorteadas do Caderno. Para passar: 20 acertos e pelo menos 1 em cada matéria.</p>${TRIAL ? `<a class="btn g full" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">🔒 Disponível no kit completo</a>` : `<a class="btn b full" href="#/q/sim/novo">Fazer um simulado</a>`}
   ${sims.length ? `<div class="muted" style="margin-top:12px">${sims.map(s => `${new Date(s.t).toLocaleDateString("pt-BR")}: <b>${s.ok}/${s.n}</b>`).join(" · ")}</div>` : ""}</div>
-  <h2 class="sec">Conta</h2><div class="card"><div class="muted">Entrou como <b>${esc(user.email)}</b>${cargos.length > 1 ? ` · ${cargos.length} kits` : ""}</div>
-  <p class="muted">Os PDFs da apostila, do caderno e do bônus, com o seu nome, foram enviados para o e-mail da compra. Dúvidas: <a href="mailto:${esc(CFG.SUPORTE)}">${esc(CFG.SUPORTE)}</a></p>
-  <div class="stack">${cargos.length > 1 ? `<button class="btn g full" id="bKit">Trocar de kit</button>` : ""}${DEMO ? "" : `<button class="btn w full" id="bOut">Sair</button>`}</div></div>`);
+  <h2 class="sec">Conta</h2><div class="card"><div class="muted">Entrou como <b>${esc(user.email)}</b>${BASES.length > 1 ? ` · ${BASES.length} kits` : ""}${TRIAL ? " · amostra grátis" : ""}</div>
+  <p class="muted">Dúvidas: <b>${esc(CFG.SUPORTE)}</b></p>
+  <div class="stack">${BASES.length > 1 ? `<button class="btn g full" id="bKit">Trocar de kit</button>` : ""}${DEMO ? "" : `<button class="btn w full" id="bOut">Sair</button>`}</div></div>`);
   const o = document.getElementById("bOut"); if (o) o.onclick = async () => { await sb.auth.signOut(); location.hash = ""; location.reload(); };
   const k = document.getElementById("bKit"); if (k) k.onclick = () => { ls("cnm_cargo", ""); location.reload(); };
+  document.querySelectorAll("[data-pdf]").forEach(b => b.onclick = () => abrePdf(b.dataset.pdf, b));
+}
+
+// ---------- materiais (PDFs) ----------
+function materiais() {
+  const itens = [["apostila", "📘", "Apostila completa", "Teoria dos assuntos do edital"], ["caderno", "📝", "Caderno de Questões", "Questões com gabarito comentado"], ["bonus", "🎁", "Bônus: reta final", "Edital verticalizado + roteiro da prova"]];
+  if (PLANO) itens.push(["plano", "🗓️", "Plano de estudos + simulados", "Cronograma até a prova"]);
+  if (TRIAL) return `<div class="card"><div style="font-weight:800">Apostila, caderno e bônus em PDF</div><p class="muted">Para ver no celular ou imprimir, com o seu nome. Disponível no kit completo.</p><a class="btn g full" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">🔒 Desbloquear no kit completo</a></div>`;
+  return `<div class="card"><p class="muted" style="margin-top:0">Abra para ler ou baixe para imprimir. Cada PDF sai com o seu nome no rodapé, de uso individual.</p><div class="stack">` +
+    itens.map(([k, e, t, d]) => `<button class="pdfbtn" data-pdf="${k}"><span class="pe">${e}</span><span class="grow" style="text-align:left"><b>${t}</b><span class="muted" style="display:block;font-size:13px">${d}</span></span><span class="go">⬇</span></button>`).join("") + `</div></div>`;
+}
+async function abrePdf(arq, btn) {
+  if (DEMO) return toast("No app de verdade, o PDF abre aqui.");
+  const old = btn.innerHTML; btn.disabled = true; btn.querySelector(".go").textContent = "…";
+  toast("Preparando seu PDF…");
+  try {
+    const { data } = await sb.auth.getSession();
+    const r = await fetch((CFG.API || "https://entrega-caneta.vercel.app") + "/api/pdf", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + data.session.access_token }, body: JSON.stringify({ cargo, arquivo: arq }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.url) throw new Error(j.msg || "erro");
+    sheet("Seu PDF está pronto", `<p>O arquivo foi gerado com o seu nome. Toque para abrir ou baixar.</p><a class="btn y full" href="${esc(j.url)}" target="_blank" rel="noopener">Abrir PDF</a><p class="muted" style="font-size:13px">O link vale por 15 minutos. Depois é só gerar de novo aqui.</p>`);
+  } catch (e) {
+    toast(e.message && e.message !== "erro" ? e.message : "Não deu para gerar agora. Tente de novo.");
+  } finally { btn.disabled = false; btn.innerHTML = old; }
 }
 
 // ---------- roteador ----------
@@ -273,6 +324,7 @@ function route() {
     case "erros": return viewErros();
     case "progresso": return viewProgresso();
     case "revisoes": return viewRevisoes();
+    case "bloq": return viewBloq(p[1]);
     default: return viewHoje();
   }
 }
@@ -306,8 +358,8 @@ function viewLogin(msg) {
 }
 
 function viewSemAcesso() {
-  $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Não achamos uma compra com este e-mail</h1>
-  <p class="muted">Você entrou como <b>${esc(user.email)}</b>. Entre com o mesmo e-mail que usou na compra.</p>
+  $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Não achamos um acesso com este e-mail</h1>
+  <p class="muted">Você entrou como <b>${esc(user.email)}</b>. Entre com o mesmo e-mail que usou na compra ou no pedido da amostra grátis.</p>
   <p class="muted">Acabou de comprar? A liberação leva alguns minutos depois da confirmação do pagamento. Se não liberar, escreva para <a href="mailto:${esc(CFG.SUPORTE)}">${esc(CFG.SUPORTE)}</a>.</p>
   <div class="stack"><button class="btn y full" onclick="location.reload()">Tentar de novo</button><button class="btn w full" id="bOut">Entrar com outro e-mail</button><a class="btn g full" href="${esc(CFG.SITE)}">Conhecer os kits</a></div></div></div>`;
   document.getElementById("bOut").onclick = async () => { await sb.auth.signOut(); location.reload(); };
@@ -315,14 +367,14 @@ function viewSemAcesso() {
 
 function viewEscolha() {
   const N = { tec: "Técnico em Enfermagem", adm: "Oficial Administrativo", acs: "Agente Comunitário de Saúde", as: "Assistente Social" };
-  $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Qual kit você quer estudar?</h1><div class="stack">${cargos.map(c => `<button class="btn b full" data-c="${c}">${esc(N[c] || c)}</button>`).join("")}</div></div></div>`;
+  $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Qual kit você quer estudar?</h1><div class="stack">${BASES.map(c => `<button class="btn b full" data-c="${c}">${esc(N[c] || c)}${!ACC.includes(c) ? " (amostra)" : ""}</button>`).join("")}</div></div></div>`;
   document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { ls("cnm_cargo", b.dataset.c); boot(); });
 }
 
 // ---------- início ----------
 async function boot() {
   try {
-    if (DEMO) { user = { id: "demo", email: "aluna.demo@email.com" }; cargos = ["tec"]; }
+    if (DEMO) { user = { id: "demo", email: "aluna.demo@email.com" }; cargos = /amostra/.test(location.search) ? ["tec-amostra"] : ["tec", "tec-plano"]; }
     else {
       sb = sb || supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
       const { data } = await sb.auth.getSession();
@@ -332,15 +384,20 @@ async function boot() {
       cargos = [...new Set((r.data || []).map(x => x.cargo))];
       if (!cargos.length) return viewSemAcesso();
     }
+    ACC = cargos;
+    BASES = [...new Set(cargos.filter(c => !/-plano$/.test(c)).map(base))];
+    if (!BASES.length) return viewSemAcesso();
     const pref = ls("cnm_cargo");
-    cargo = cargos.includes(pref) ? pref : cargos.length === 1 ? cargos[0] : null;
+    cargo = BASES.includes(pref) ? pref : BASES.length === 1 ? BASES[0] : null;
     if (!cargo) return viewEscolha();
     ls("cnm_cargo", cargo);
+    TRIAL = !cargos.includes(cargo);
+    PLANO = cargos.includes(cargo + "-plano");
     $app.innerHTML = '<div class="boot"><div class="spin"></div></div>';
-    [C, P] = await Promise.all([loadContent(cargo), loadProgress()]);
+    [C, P] = await Promise.all([loadContent(TRIAL ? cargo + "-amostra" : cargo), loadProgress()]);
     P = Object.assign(emptyP(), P || {});
     BY = C.questoes; ASQ = {}; AS = {};
-    allAs().forEach(a => { AS[a.code] = a; ASQ[a.code] = a.q.filter(id => BY[id]); });
+    allAs().forEach(a => { AS[a.code] = a; ASQ[a.code] = (a.q || []).filter(id => BY[id]); });
     route();
   } catch (e) {
     console.error(e);
