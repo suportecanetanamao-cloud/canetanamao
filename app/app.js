@@ -242,7 +242,7 @@ function summary() {
   const msg = pct(ok, r.length) >= 70 ? "Mandou bem! Na revisão, refaça só as erradas." : pct(ok, r.length) >= 50 ? "Bom caminho. As erradas foram para o seu caderno de erros." : "Volte na teoria e refaça as erradas amanhã.";
   const back = S.mode === "a" ? `<a class="btn w full" href="#/a/${S.arg}">Voltar ao assunto</a>` : `<a class="btn w full" href="#/hoje">Voltar ao início</a>`;
   shell("hoje", `<div class="card sum"><div class="kick">${esc(S.title)}</div><div class="big" style="margin-top:10px">${ok}/${r.length}</div><div class="muted">${pct(ok, r.length)}% de acertos</div><p>${msg}</p>
-  ${TRIAL && S.mode === "a" && AS[S.arg] && AS[S.arg].nqk > S.ids.length ? `<div class="card trial" style="margin-top:14px;text-align:left"><b>Gostou?</b> No kit completo este assunto tem ${AS[S.arg].nqk} questões, e o app inteiro tem ${C.nq_total || ""} questões em 44 assuntos.<a class="btn b full" style="margin-top:10px" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Quero o kit completo</a></div>` : ""}
+  ${TRIAL && S.mode === "a" && AS[S.arg] && AS[S.arg].nqk > S.ids.length ? `<div class="card trial" style="margin-top:14px;text-align:left"><b>Gostou?</b> No kit completo este assunto tem ${AS[S.arg].nqk} questões, e o app inteiro tem ${C.nq_total || ""} questões em ${allAs().length} assuntos.<a class="btn b full" style="margin-top:10px" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Quero o kit completo</a></div>` : ""}
   <div class="stack">${r.length - ok ? `<a class="btn y full" href="#/erros">Ver as erradas</a>` : ""}${back}</div></div>`, backTop("Resultado", "", "#/hoje"));
   SES = null;
 }
@@ -374,7 +374,7 @@ function viewEscolha() {
 // ---------- início ----------
 async function boot() {
   try {
-    if (DEMO) { user = { id: "demo", email: "aluna.demo@email.com" }; cargos = /amostra/.test(location.search) ? ["tec-amostra"] : ["tec", "tec-plano"]; }
+    if (DEMO) { user = { id: "demo", email: "aluna.demo@email.com" }; const dc = (location.search.match(/[?&]c=(\w+)/) || [])[1] || "tec"; cargos = /amostra/.test(location.search) ? [dc + "-amostra"] : [dc, dc + "-plano"]; }
     else {
       sb = sb || supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
       const { data } = await sb.auth.getSession();
