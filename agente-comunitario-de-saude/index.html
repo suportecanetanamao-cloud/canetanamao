@@ -28,6 +28,14 @@ details[open] .plus{transform:rotate(45deg)}
 .cta:hover{background:#FFD24D !important}
 </style>
 <style>html{scroll-behavior:smooth}img{max-width:100%;height:auto}</style>
+<!-- Meta Pixel + Microsoft Clarity -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','2613460002483796');fbq('track','PageView');fbq('track','ViewContent',{content_name:'Agente Comunitario de Saude',content_category:'Kit concurso Birigui',value:47.90,currency:'BRL'});
+(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","z8wncffs0r");
+clarity('set','cargo','Agente Comunitario de Saude');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2613460002483796&ev=PageView&noscript=1"/></noscript>
 </head>
 <body>
 <div style="font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0B1747; background: #F3F5FA; line-height: 1.5">
@@ -226,7 +234,7 @@ details[open] .plus{transform:rotate(45deg)}
       if(d.whatsapp.replace(/\D/g,'').length<10){msg.textContent='Confira seu WhatsApp com DDD.';return;}
       if(!d.aceite){msg.textContent='Marque a caixinha de aceite para receber a amostra.';return;}
       msg.textContent=''; b.disabled=true; b.textContent='Enviando...';
-      var libera=function(){ ls('cnm_lead','1'); f.style.display='none'; ok.hidden=false; ok.style.display='flex'; };
+      var libera=function(){ try{fbq('track','Lead',{content_name:'teste gratis'})}catch(x){} try{clarity('event','teste_gratis')}catch(x){} ls('cnm_lead','1'); f.style.display='none'; ok.hidden=false; ok.style.display='flex'; };
       fetch('https://entrega-caneta.vercel.app/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
         .then(function(r){return r.json().then(function(j){return {s:r.status,j:j};});})
         .then(function(x){ if(x.s>=400){msg.textContent=x.j.msg||'Confira seus dados.'; b.disabled=false; b.textContent='Quero testar o app grátis';} else libera(); })
@@ -291,5 +299,9 @@ details[open] .plus{transform:rotate(45deg)}
 </div>
 
 </div>
+<script>
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="lastlink.com"]');if(!a)return;
+try{fbq('track','InitiateCheckout',{value:47.90,currency:'BRL'})}catch(x){}try{clarity('event','clicou_comprar')}catch(x){}},true);
+</script>
 </body>
 </html>
