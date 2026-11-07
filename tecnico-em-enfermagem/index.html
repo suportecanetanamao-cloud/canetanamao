@@ -233,11 +233,11 @@ clarity('set','cargo','Tecnico em Enfermagem');
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){msg.textContent='Confira seu e-mail.';return;}
       if(d.whatsapp.replace(/\D/g,'').length<10){msg.textContent='Confira seu WhatsApp com DDD.';return;}
       if(!d.aceite){msg.textContent='Marque a caixinha de aceite para receber a amostra.';return;}
-      msg.textContent=''; b.disabled=true; b.textContent='Enviando...';
-      var libera=function(){ try{fbq('track','Lead',{content_name:'teste gratis'})}catch(x){} try{clarity('event','teste_gratis')}catch(x){} ls('cnm_lead','1'); f.style.display='none'; ok.hidden=false; ok.style.display='flex'; };
+      msg.textContent=''; b.disabled=true; b.textContent='⏳ Liberando seu acesso... aguarde'; msg.style.color='#5B6584'; msg.textContent='Leva uns 10 segundinhos. Não feche a página.';
+      var libera=function(){ try{fbq('track','Lead',{content_name:'teste gratis'})}catch(x){} try{clarity('event','teste_gratis')}catch(x){} ls('cnm_lead','1'); msg.textContent=''; msg.style.color=''; f.style.display='none'; ok.hidden=false; ok.style.display='flex'; };
       fetch('https://entrega-caneta.vercel.app/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
         .then(function(r){return r.json().then(function(j){return {s:r.status,j:j};});})
-        .then(function(x){ if(x.s>=400){msg.textContent=x.j.msg||'Confira seus dados.'; b.disabled=false; b.textContent='Quero testar o app grátis';} else libera(); })
+        .then(function(x){ if(x.s>=400){msg.style.color=''; msg.textContent=x.j.msg||'Confira seus dados.'; b.disabled=false; b.textContent='Quero testar o app grátis';} else libera(); })
         .catch(libera);
     });
   });
@@ -261,7 +261,7 @@ clarity('set','cargo','Tecnico em Enfermagem');
 <span style="color: #5B6584">de <s>R$ 97,00</s> por apenas</span>
 <b style="font-size: 52px; line-height: 1.05; color: #1D3FD8">R$ 47,90</b>
 <span style="color: #5B6584; font-size: 14px">no Pix ou cartão</span>
-<span style="background: #E8F7EE; color: #0B6B3A; font-weight: 700; font-size: 14px; padding: 6px 12px; border-radius: 999px; margin-top: 8px">Pague no Pix e receba na hora</span>
+<a href="https://lastlink.com/p/CE5C4624A/checkout-payment/" style="background: #E8F7EE; color: #0B6B3A; font-weight: 700; font-size: 14px; padding: 6px 12px; border-radius: 999px; margin-top: 8px; text-decoration: none">Pague no Pix e receba na hora →</a>
 </div>
 <a href="https://lastlink.com/p/CE5C4624A/checkout-payment/" class="cta" style="background: #FFC727; color: #0B1747; font-weight: 800; text-decoration: none; padding: 18px 24px; border-radius: 14px; font-size: 18px; text-align: center; min-height: 44px; box-sizing: border-box">Quero o app + kit agora</a>
 <span style="text-align: center; font-size: 14px; color: #5B6584">Acesso liberado no seu e-mail logo após o pagamento</span>
