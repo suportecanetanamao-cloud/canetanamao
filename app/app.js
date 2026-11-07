@@ -366,7 +366,7 @@ function viewSemAcesso() {
 }
 
 function viewEscolha() {
-  const N = { tec: "Técnico em Enfermagem", adm: "Oficial Administrativo", acs: "Agente Comunitário de Saúde", as: "Assistente Social" };
+  const N = { tec: "Técnico em Enfermagem", adm: "Oficial Administrativo", acs: "Agente Comunitário de Saúde", as: "Assistente Social", enf: "Enfermeiro 30h e ESF" };
   $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Qual kit você quer estudar?</h1><div class="stack">${BASES.map(c => `<button class="btn b full" data-c="${c}">${esc(N[c] || c)}${!ACC.includes(c) ? " (amostra)" : ""}</button>`).join("")}</div></div></div>`;
   document.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { ls("cnm_cargo", b.dataset.c); boot(); });
 }
