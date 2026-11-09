@@ -168,7 +168,7 @@ clarity('set','cargo','Assistente Social');
 <span style="background: #FFC727; font-weight: 800; font-size: 13px; padding: 5px 12px; border-radius: 999px">GRÁTIS</span>
 <h2 style="margin: 12px 0 8px; font-size: clamp(22px, 2.8vw, 30px); font-weight: 800; line-height: 1.15">Teste o app grátis</h2>
 <p style="margin: 0 0 10px; color: #3B4568; font-size: 17px">Estude de verdade pelo app: um assunto completo de cada matéria, com teoria e questões reais corrigidas na hora (5 de cada assunto, 20 no total). Se comprar depois, seu progresso continua.</p>
-<p style="margin: 0; color: #3B4568; font-size: 15px">O acesso chega no seu e-mail na hora, junto com uma amostra em PDF.</p>
+<p style="margin: 0; color: #3B4568; font-size: 15px">O app abre na hora, sem senha e sem código. E ainda mandamos uma amostra em PDF no seu e-mail.</p>
 </div>
 <form class="form-amostra" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px" novalidate>
 <label style="display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px">Nome<input name="nome" required autocomplete="name" style="font: inherit; font-weight: 400; font-size: 16px; padding: 12px 14px; border: 1.5px solid #C9D2F2; border-radius: 12px"></label>
@@ -181,8 +181,8 @@ clarity('set','cargo','Assistente Social');
 </form>
 <div class="amostra-ok" hidden style="flex: 1 1 340px; min-width: 0; background: #E8EDFD; border-radius: 16px; padding: 24px; flex-direction: column; gap: 12px">
 <b style="font-size: 20px">Pronto! Seu teste grátis do app está liberado.</b>
-<span style="color: #3B4568">Abra o app e entre com o mesmo e-mail: você recebe um código de acesso. Se o e-mail não aparecer, veja no spam ou em promoções.</span>
-<a href="/app/" target="_blank" rel="noopener" style="background: #1D3FD8; color: #FFFFFF; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; text-align: center">Abrir o app agora</a>
+<span style="color: #3B4568">Se o app não abriu sozinho, toque no botão abaixo.</span>
+<a href="/app/?teste=as" style="background: #1D3FD8; color: #FFFFFF; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; text-align: center">Abrir o app agora</a>
 <a href="amostra-gratis-assistente-social.pdf" target="_blank" rel="noopener" style="color: #1D3FD8; font-weight: 700; text-align: center; font-size: 15px">ou baixar a amostra em PDF</a>
 </div>
 </div>
@@ -205,8 +205,8 @@ clarity('set','cargo','Assistente Social');
 </form>
 <div class="amostra-ok" hidden style="background: #E8EDFD; border-radius: 16px; padding: 20px; flex-direction: column; gap: 12px">
 <b style="font-size: 20px">Pronto! Seu teste grátis do app está liberado.</b>
-<span style="color: #3B4568">Abra o app e entre com o mesmo e-mail: você recebe um código de acesso. Se o e-mail não aparecer, veja no spam ou em promoções.</span>
-<a href="/app/" target="_blank" rel="noopener" style="background: #1D3FD8; color: #FFFFFF; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; text-align: center">Abrir o app agora</a>
+<span style="color: #3B4568">Se o app não abriu sozinho, toque no botão abaixo.</span>
+<a href="/app/?teste=as" style="background: #1D3FD8; color: #FFFFFF; font-weight: 800; text-decoration: none; padding: 14px 22px; border-radius: 14px; text-align: center">Abrir o app agora</a>
 <a href="amostra-gratis-assistente-social.pdf" target="_blank" rel="noopener" style="color: #1D3FD8; font-weight: 700; text-align: center; font-size: 15px">ou baixar a amostra em PDF</a>
 </div>
 </div>
@@ -233,12 +233,12 @@ clarity('set','cargo','Assistente Social');
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){msg.textContent='Confira seu e-mail.';return;}
       if(d.whatsapp.replace(/\D/g,'').length<10){msg.textContent='Confira seu WhatsApp com DDD.';return;}
       if(!d.aceite){msg.textContent='Marque a caixinha de aceite para receber a amostra.';return;}
-      msg.textContent=''; b.disabled=true; b.textContent='⏳ Liberando seu acesso... aguarde'; msg.style.color='#5B6584'; msg.textContent='Leva uns 10 segundinhos. Não feche a página.';
-      var libera=function(){ try{fbq('track','Lead',{content_name:'teste gratis'})}catch(x){} try{clarity('event','teste_gratis')}catch(x){} ls('cnm_lead','1'); msg.textContent=''; msg.style.color=''; f.style.display='none'; ok.hidden=false; ok.style.display='flex'; };
-      fetch('https://entrega-caneta.vercel.app/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
-        .then(function(r){return r.json().then(function(j){return {s:r.status,j:j};});})
-        .then(function(x){ if(x.s>=400){msg.style.color=''; msg.textContent=x.j.msg||'Confira seus dados.'; b.disabled=false; b.textContent='Quero testar o app grátis';} else libera(); })
-        .catch(libera);
+      msg.textContent=''; b.disabled=true; b.textContent='⏳ Abrindo o app...';
+      try{fbq('track','Lead',{content_name:'teste gratis'})}catch(x){} try{clarity('event','teste_gratis')}catch(x){}
+      ls('cnm_lead','1'); ls('cnm_guest','as'); ls('cnm_cargo','as'); if(!ls('cnm_nome')) ls('cnm_nome', d.nome);
+      try{ fetch('https://entrega-caneta.vercel.app/api/lead',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).catch(function(){}); }catch(x){}
+      var abre=function(){ f.style.display='none'; ok.hidden=false; ok.style.display='flex'; location.href='/app/?teste=as&n='+encodeURIComponent(d.nome.split(' ')[0]); };
+      setTimeout(abre, 700);
     });
   });
 })();
