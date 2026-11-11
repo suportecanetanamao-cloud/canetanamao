@@ -709,6 +709,20 @@ function route() {
 window.addEventListener("hashchange", route);
 
 // ---------- login ----------
+function sugereEmail(e){
+  e=(e||"").trim().toLowerCase(); var m=e.match(/^([^@\s]+)@([^@\s]+)$/); if(!m) return "";
+  var u=m[1], d=m[2];
+  var OK=["gmail.com","hotmail.com","hotmail.com.br","outlook.com","outlook.com.br","live.com","yahoo.com","yahoo.com.br","icloud.com","bol.com.br","uol.com.br","terra.com.br","msn.com"];
+  if(OK.indexOf(d)>=0) return "";
+  var FIX={"gmail.com.br":"gmail.com","gmail.br":"gmail.com","gmail":"gmail.com","hotmail":"hotmail.com","hotmail.br":"hotmail.com","outlook":"outlook.com","yahoo":"yahoo.com.br","icloud":"icloud.com","icloud.com.br":"icloud.com"};
+  if(FIX[d]) return u+"@"+FIX[d];
+  function lev(a,b){var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;for(i=1;i<=a.length;i++){var q=[i];for(j=1;j<=b.length;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]==b[j-1]?0:1));p=q;}return p[b.length];}
+  var best="",bd=9;
+  OK.forEach(function(k){var x=lev(d,k);if(x<bd){bd=x;best=k;}});
+  if(bd>0&&bd<=2) return u+"@"+best;
+  return "";
+}
+let EMAIL_OK = "";
 function viewLogin(msg, deTeste) {
   $app.innerHTML = `<div class="login"><div class="box"><div class="brand" style="color:var(--navy);margin-bottom:18px">${LOGO}<div>caneta<small style="color:var(--blue)">na mão</small></div></div>
   <h1 class="pg" style="margin-bottom:6px">Entrar no app</h1><p class="muted">Use o e-mail da sua compra. Vamos te mandar um e-mail com um botão para entrar.</p>
@@ -718,7 +732,15 @@ function viewLogin(msg, deTeste) {
   const bv = document.getElementById("bVolta"); if (bv) bv.onclick = e => { e.preventDefault(); location.hash = "#/hoje"; boot(); };
   const fE = document.getElementById("fE"), fC = document.getElementById("fC");
   fE.onsubmit = async e => {
-    e.preventDefault(); const email = document.getElementById("em").value.trim().toLowerCase(); ls("cnm_email", email);
+    e.preventDefault(); const email = document.getElementById("em").value.trim().toLowerCase();
+    const sug = sugereEmail(email), er = fE.querySelector(".err");
+    if (sug && EMAIL_OK !== email) {
+      er.innerHTML = `Seu e-mail parece ter um erro de digitação. Você quis dizer <b>${esc(sug)}</b>?<br><button type="button" class="btn y full" id="bSug" style="margin-top:8px">Sim, usar ${esc(sug)}</button><button type="button" class="btn w full" id="bNao" style="margin-top:6px">Não, meu e-mail está certo</button>`;
+      document.getElementById("bSug").onclick = () => { document.getElementById("em").value = sug; er.textContent = ""; fE.requestSubmit ? fE.requestSubmit() : fE.onsubmit(new Event("submit")); };
+      document.getElementById("bNao").onclick = () => { EMAIL_OK = email; er.textContent = ""; fE.requestSubmit ? fE.requestSubmit() : fE.onsubmit(new Event("submit")); };
+      return;
+    }
+    er.textContent = ""; ls("cnm_email", email);
     const b = fE.querySelector("button"); b.disabled = true; b.textContent = "Enviando...";
     const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + "/app/" } });
     b.disabled = false; b.textContent = "Receber e-mail de acesso";
@@ -736,12 +758,14 @@ function viewLogin(msg, deTeste) {
   };
 }
 
-function viewSemAcesso() {
-  $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Não achamos um acesso com este e-mail</h1>
-  <p class="muted">Você entrou como <b>${esc(user.email)}</b>. Entre com o mesmo e-mail que usou na compra ou no pedido da amostra grátis.</p>
+let ss_semAcesso = 0;
+function viewSemAcesso(teste) {
+  $app.innerHTML = `<div class="login"><div class="box"><h1 class="pg">Não achamos uma compra com este e-mail</h1>
+  <p class="muted">Você entrou como <b>${esc(user.email)}</b>. <b>Se você comprou o kit, entre com o mesmo e-mail que usou no pagamento</b> (confira letras e números).</p>
   <p class="muted">Acabou de comprar? A liberação leva alguns minutos depois da confirmação do pagamento. Se não liberar, escreva para <a href="mailto:${esc(CFG.SUPORTE)}">${esc(CFG.SUPORTE)}</a>.</p>
-  <div class="stack"><button class="btn y full" onclick="location.reload()">Tentar de novo</button><button class="btn w full" id="bOut">Entrar com outro e-mail</button><a class="btn g full" href="${esc(CFG.SITE)}">Conhecer os kits</a></div></div></div>`;
+  <div class="stack"><button class="btn y full" onclick="location.reload()">Tentar de novo</button><button class="btn w full" id="bOut">Entrar com outro e-mail</button>${teste ? `<button class="btn g full" id="bTeste">Continuar no teste grátis</button>` : `<a class="btn g full" href="${esc(CFG.SITE)}">Conhecer os kits</a>`}</div></div></div>`;
   document.getElementById("bOut").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  const bt = document.getElementById("bTeste"); if (bt) bt.onclick = () => { GUEST = true; cargos = [teste + "-amostra"]; ss_semAcesso = 1; boot(); };
 }
 
 function viewEscolha() {
@@ -774,7 +798,7 @@ async function boot() {
         if (r.error) r = await sb.from("acessos").select("cargo");
         cargos = [...new Set((r.data || []).map(x => x.cargo))];
         NOME_ACESSO = ((r.data || []).find(x => x.nome) || {}).nome || "";
-        if (!cargos.length) { if (g && NOMES_KIT[g]) { GUEST = true; cargos = [g + "-amostra"]; } else return viewSemAcesso(); }
+        if (!cargos.length) { if (g && NOMES_KIT[g] && ss_semAcesso) { GUEST = true; cargos = [g + "-amostra"]; } else return viewSemAcesso(g && NOMES_KIT[g] ? g : ""); }
       }
     }
     ACC = cargos;
