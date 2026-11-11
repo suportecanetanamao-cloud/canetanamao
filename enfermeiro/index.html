@@ -260,6 +260,7 @@ clarity('set','cargo','Enfermeiro');
 </div>
 </div>
 <script>
+function sugereEmail(e){  e=(e||"").trim().toLowerCase(); var m=e.match(/^([^@\s]+)@([^@\s]+)$/); if(!m) return "";  var u=m[1], d=m[2];  var OK=["gmail.com","hotmail.com","hotmail.com.br","outlook.com","outlook.com.br","live.com","yahoo.com","yahoo.com.br","icloud.com","bol.com.br","uol.com.br","terra.com.br","msn.com"];  if(OK.indexOf(d)>=0) return "";  var FIX={"gmail.com.br":"gmail.com","gmail.br":"gmail.com","gmail":"gmail.com","hotmail":"hotmail.com","hotmail.br":"hotmail.com","outlook":"outlook.com","yahoo":"yahoo.com.br","icloud":"icloud.com","icloud.com.br":"icloud.com"};  if(FIX[d]) return u+"@"+FIX[d];  function lev(a,b){var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;for(i=1;i<=a.length;i++){var q=[i];for(j=1;j<=b.length;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]==b[j-1]?0:1));p=q;}return p[b.length];}  var best="",bd=9;  OK.forEach(function(k){var x=lev(d,k);if(x<bd){bd=x;best=k;}});  if(bd>0&&bd<=2) return u+"@"+best;  return "";}
 (function(){
   function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
   function ss(k,v){try{if(v===undefined)return sessionStorage.getItem(k);sessionStorage.setItem(k,v);}catch(e){return null;}}
@@ -278,7 +279,7 @@ clarity('set','cargo','Enfermeiro');
       ev.preventDefault();
       var d={nome:f.nome.value.trim(), email:f.email.value.trim(), whatsapp:f.whatsapp.value, aceite:f.aceite.checked, site:f.site.value, cargo:'enf'};
       if(!d.nome){msg.textContent='Digite seu nome.';return;}
-      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){msg.textContent='Confira seu e-mail.';return;}
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){msg.textContent='Confira seu e-mail.';return;}var sg=sugereEmail(d.email);if(sg&&f.dataset.ok!==d.email){msg.innerHTML='Seu e-mail parece ter um erro. Você quis dizer <b>'+sg+'</b>? <a href="#" class="sg-sim" style="color:#1D3FD8;font-weight:700">Sim, corrigir</a> · <a href="#" class="sg-nao" style="color:#5B6584">Não, está certo</a>';msg.querySelector('.sg-sim').onclick=function(x){x.preventDefault();f.email.value=sg;msg.textContent='';};msg.querySelector('.sg-nao').onclick=function(x){x.preventDefault();f.dataset.ok=d.email;msg.textContent='';};return;}
       if(d.whatsapp.replace(/\D/g,'').length<10){msg.textContent='Confira seu WhatsApp com DDD.';return;}
       if(!d.aceite){msg.textContent='Marque a caixinha de aceite para receber a amostra.';return;}
       msg.textContent=''; b.disabled=true; b.textContent='⏳ Abrindo o app...';
