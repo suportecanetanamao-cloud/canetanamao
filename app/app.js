@@ -6,9 +6,9 @@ const DAY = 864e5, REV = [1, 7, 15];
 const L = "ABCD";
 const $app = document.getElementById("app");
 let sb = null, user = null, cargos = [], cargo = null, C = null, P = null, BY = {}, ASQ = {}, saveT = null;
-let ACC = [], TRIAL = false, PLANO = false, BASES = [], GUEST = false, NOME_ACESSO = "", INSTALL = null;
+let ACC = [], TRIAL = false, PLANO = false, AUDIO = false, BASES = [], GUEST = false, NOME_ACESSO = "", INSTALL = null;
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL = e; });
-const base = c => c.replace(/-(amostra|plano)$/, "");
+const base = c => c.replace(/-(amostra|plano|audio)$/, "");
 let SES = null; // sessão de questões em andamento
 
 // ---------- utilidades ----------
@@ -571,7 +571,7 @@ function viewPerfil(sub) {
   ${item("#/comece", "🚀", "Comece por aqui", "Como estudar com o app, em 1 minuto")}
   ${item("#/instalar", "📲", "Instalar no celular", "Vira um ícone na tela, como um aplicativo")}
   ${item("#/comece/4", "🎯", "Meu ritmo de estudo", RITMO[P.ritmo] ? RITMO[P.ritmo].t + " · " + RITMO[P.ritmo].n + " assuntos por semana" : "Defina quantas horas por dia")}</div>
-  <h2 class="sec">Meus materiais</h2>${materiais()}
+  ${audios()}<h2 class="sec">Meus materiais</h2>${materiais()}
   <h2 class="sec">Ajuda</h2><div class="stack">
   ${item("mailto:" + esc(CFG.SUPORTE), "💬", "Falar com o suporte", esc(CFG.SUPORTE))}
   ${item("https://instagram.com/canetanamaoconcursos", "📷", "Instagram", "@canetanamaoconcursos", 'target="_blank" rel="noopener"')}</div>
@@ -584,6 +584,7 @@ function viewPerfil(sub) {
   const k = document.getElementById("bKit"); if (k) k.onclick = () => { ls("cnm_cargo", ""); location.reload(); };
   const en = document.getElementById("bEntrar"); if (en) en.onclick = () => { history.replaceState(null, "", location.pathname); viewLogin("", true); };
   document.querySelectorAll("[data-pdf]").forEach(b => b.onclick = () => abrePdf(b.dataset.pdf, b));
+  document.querySelectorAll("[data-aud]").forEach(b => b.onclick = () => abreAudio(+b.dataset.aud));
   if (sub === "nome") editaNome(() => go("#/hoje"));
 }
 
@@ -658,6 +659,35 @@ function bindInstalar() {
 function viewInstalar() {
   shell("perfil", `<h1 class="pg">Instalar no celular</h1><p class="muted" style="font-size:16px">O app vira um ícone na tela, abre com um toque e fica mais fácil estudar todo dia. Não precisa baixar nada da loja.</p>${instalarHtml()}`, backTop("Instalar no celular", "", "#/perfil"));
   bindInstalar();
+}
+
+// ---------- resumos em áudio ----------
+const AUDIOS = { tec: ["Sinais vitais, pressão arterial e exame físico", "Interpretação de texto", "Lógica: proposições, tabela-verdade e negações", "Administração de medicamentos e cálculo", "Classes de palavras", "SUS: princípios e Leis 8.080 e 8.142", "Sequências lógicas", "Termos da oração", "Urgência e emergência: RCP e oxigenoterapia", "Período composto"] };
+function audios() {
+  const L = AUDIOS[cargo];
+  if (!AUDIO || !L) return "";
+  return `<h2 class="sec">🎧 Resumos em áudio</h2><div class="card"><p class="muted" style="margin-top:0">Os assuntos que mais caem, para ouvir no ônibus, no trabalho ou antes de dormir. Dá para acelerar.</p><div class="stack">` +
+    L.map((t, i) => `<button class="pdfbtn" data-aud="${i + 1}"><span class="pe">🎧</span><span class="grow" style="text-align:left"><b>${String(i + 1).padStart(2, "0")} · ${esc(t)}</b></span><span class="go">▶</span></button>`).join("") + `</div></div>`;
+}
+async function abreAudio(n) {
+  const L = AUDIOS[cargo] || [];
+  if (DEMO) return toast("No app de verdade, o áudio toca aqui.");
+  toast("Carregando o áudio…");
+  const { data, error } = await sb.storage.from("audios").createSignedUrl(`${cargo}/${String(n).padStart(2, "0")}.mp3`, 3600);
+  if (error || !data) return toast("Não deu para carregar o áudio. Tente de novo.");
+  let vel = +(ls("cnm_vel") || 1);
+  sheet(`${String(n).padStart(2, "0")} · ${L[n - 1] || "Resumo"}`, `<audio id="aud" src="${esc(data.signedUrl)}" controls autoplay style="width:100%"></audio>
+  <p class="muted" style="margin:14px 0 6px;font-weight:700">Velocidade</p><div class="vel" style="display:flex;gap:8px;flex-wrap:wrap">${[1, 1.25, 1.5, 1.75, 2].map(v => `<button class="btn ${v === vel ? "b" : "w"}" data-v="${v}" style="flex:1;min-width:56px;padding:10px 0">${String(v).replace(".", ",")}x</button>`).join("")}</div>
+  <div style="display:flex;gap:8px;margin-top:14px">${n > 1 ? `<button class="btn w full" id="aPrev">‹ Anterior</button>` : ""}${n < L.length ? `<button class="btn y full" id="aNext">Próximo ›</button>` : ""}</div>`);
+  const a = document.getElementById("aud"); a.playbackRate = vel;
+  const sh = a.closest(".sheet"); if (sh) sh.addEventListener("click", e => { if (e.target === sh || e.target.closest(".hd button")) a.pause(); });
+  a.addEventListener("loadedmetadata", () => { a.playbackRate = vel; });
+  document.querySelectorAll(".vel [data-v]").forEach(b => b.onclick = () => { vel = +b.dataset.v; a.playbackRate = vel; ls("cnm_vel", String(vel)); document.querySelectorAll(".vel [data-v]").forEach(x => x.className = "btn " + (+x.dataset.v === vel ? "b" : "w")); });
+  const close = () => { a.pause(); document.querySelectorAll(".sheet").forEach(x => x.remove()); };
+  const pv = document.getElementById("aPrev"); if (pv) pv.onclick = () => { close(); abreAudio(n - 1); };
+  const nx = document.getElementById("aNext"); if (nx) nx.onclick = () => { close(); abreAudio(n + 1); };
+  a.addEventListener("ended", () => { if (n < L.length) { close(); abreAudio(n + 1); } });
+  try { clarity("event", "audio_" + n); } catch (e) {}
 }
 
 // ---------- materiais (PDFs) ----------
@@ -802,7 +832,7 @@ async function boot() {
       }
     }
     ACC = cargos;
-    BASES = [...new Set(cargos.filter(c => !/-plano$/.test(c)).map(base))];
+    BASES = [...new Set(cargos.filter(c => !/-(plano|audio)$/.test(c)).map(base))];
     if (!BASES.length) return viewSemAcesso();
     const pref = ls("cnm_cargo");
     cargo = BASES.includes(pref) ? pref : BASES.length === 1 ? BASES[0] : null;
@@ -810,6 +840,7 @@ async function boot() {
     ls("cnm_cargo", cargo);
     TRIAL = !cargos.includes(cargo);
     PLANO = cargos.includes(cargo + "-plano");
+    AUDIO = cargos.includes(cargo + "-audio");
     $app.innerHTML = '<div class="boot"><div class="spin"></div></div>';
     [C, P] = await Promise.all([loadContent(TRIAL ? cargo + "-amostra" : cargo), loadProgress()]);
     P = Object.assign(emptyP(), P || {});
