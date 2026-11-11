@@ -334,7 +334,7 @@ function sugereEmail(e){  e=(e||"").trim().toLowerCase(); var m=e.match(/^([^@\s
 <script>
 (function(){
 var w=document.getElementById('vsl'),v=document.getElementById('vslv'),s=document.getElementById('vsls'),b=document.getElementById('vslb'),c=document.getElementById('vslc');
-var CTA=110.5,som=false,mk={};
+var CTA=110.5,som=false,mk={},mu={};
 function ev(n){try{if(window.fbq)fbq('trackCustom',n)}catch(e){}try{if(window.clarity)clarity('event',n)}catch(e){}}
 function st(){window.__vslAtivo=som&&!v.paused&&!v.ended}
 function ativar(e){if(e)e.stopPropagation();som=true;s.style.display='none';v.muted=false;v.currentTime=0;var p=v.play();if(p&&p.catch)p.catch(function(){});w.classList.remove('pausado');ev('VSL_som')}
@@ -342,7 +342,7 @@ s.addEventListener('click',ativar);
 w.addEventListener('click',function(){if(!som){ativar();return}if(v.paused){v.play();w.classList.remove('pausado')}else{v.pause();w.classList.add('pausado')}});
 ['play','pause','ended'].forEach(function(n){v.addEventListener(n,st)});
 v.addEventListener('timeupdate',function(){var d=v.duration||117.7,x=Math.min(1,v.currentTime/d);b.style.width=(100*(1-Math.pow(1-x,2.2)))+'%';
- if(!som)return;if(v.currentTime>=CTA)c.classList.add('on');
+ if(!som){var r=v.getBoundingClientRect();if(r.top<window.innerHeight&&r.bottom>0)[25,50,75,95].forEach(function(m){if(x*100>=m&&!mu[m]){mu[m]=1;ev('VSL_mudo_'+m)}});return}if(v.currentTime>=CTA)c.classList.add('on');
  [25,50,75,95].forEach(function(m){if(x*100>=m&&!mk[m]){mk[m]=1;ev('VSL_'+m)}});});
 v.addEventListener('ended',function(){c.classList.add('on');if(!som){v.currentTime=0;v.play()}});
 // barra fixa: aparece depois do vídeo, some na oferta
