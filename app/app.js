@@ -577,7 +577,7 @@ function viewPerfil(sub) {
   ${item("https://instagram.com/canetanamaoconcursos", "📷", "Instagram", "@canetanamaoconcursos", 'target="_blank" rel="noopener"')}</div>
   <h2 class="sec">Conta</h2><div class="stack">
   ${BASES.length > 1 ? `<button class="btn g full" id="bKit">Trocar de kit</button>` : ""}
-  ${GUEST ? `<div class="card"><div style="font-weight:800">Já comprou o kit?</div><p class="muted" style="margin:4px 0 12px">Entre com o e-mail da compra para liberar tudo. O que você fez no teste continua aqui.</p><button class="btn b full" id="bEntrar">Entrar com meu e-mail</button></div>`
+  ${GUEST ? `<div class="card"><div style="font-weight:800">Já comprou o kit?</div><p class="muted" style="margin:4px 0 12px">Entre com o CPF da compra para liberar tudo. O que você fez no teste continua aqui.</p><button class="btn b full" id="bEntrar">Entrar com meu CPF</button></div>`
     : DEMO ? "" : `<button class="btn w full" id="bOut">Sair da conta</button>`}</div>`);
   document.getElementById("bNome").onclick = () => editaNome();
   const o = document.getElementById("bOut"); if (o) o.onclick = async () => { await sb.auth.signOut(); location.hash = ""; location.reload(); };
@@ -756,7 +756,7 @@ let EMAIL_OK = "";
 function viewLogin(msg, deTeste) {
   $app.innerHTML = `<div class="login"><div class="box"><div class="brand" style="color:var(--navy);margin-bottom:18px">${LOGO}<div>caneta<small style="color:var(--blue)">na mão</small></div></div>
   <h1 class="pg" style="margin-bottom:6px">Entrar no app</h1>
-  <form id="fP"${msg ? " hidden" : ""}><p class="muted">Comprou o kit? Digite o <b>CPF</b> que você usou na compra:</p><input id="cpf" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" style="font-size:22px;letter-spacing:1px;text-align:center"><div class="err" id="erP"></div><button class="btn y full">Entrar</button><p class="muted" style="margin-top:14px;font-size:14px"><a href="#" id="bUsaEmail">Prefiro entrar pelo e-mail</a></p></form>
+  <form id="fP"${msg ? " hidden" : ""}><p class="muted">Comprou o kit? Digite o <b>CPF</b> que você usou na compra:</p><input id="cpf" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" style="font-size:22px;letter-spacing:1px;text-align:center"><div id="boxSenha" hidden><p class="muted" style="margin:12px 0 6px">Digite sua senha:</p><input type="password" id="senha" autocomplete="current-password" placeholder="Sua senha"></div><div class="err" id="erP"></div><button class="btn y full">Entrar</button><p class="muted" style="margin-top:14px;font-size:14px"><a href="#" id="bUsaEmail">Prefiro entrar pelo e-mail</a></p></form>
   <form id="fE"${msg ? "" : " hidden"}><p class="muted">Use o e-mail da sua compra. Vamos te mandar um e-mail com um botão para entrar.</p><input type="email" id="em" required placeholder="seu@email.com" autocomplete="email" value="${esc(ls("cnm_email") || "")}"><div class="err">${esc(msg || "")}</div><button class="btn y full">Receber e-mail de acesso</button><p class="muted" style="margin-top:14px;font-size:14px"><a href="#" id="bUsaCpf">‹ Entrar com o CPF</a></p></form>
   <form id="fC" hidden><div class="onb-ic" style="font-size:40px">📩</div><p id="sentTo"></p><p class="muted" style="margin-bottom:4px">Ou digite aqui o código de 6 números que veio no e-mail:</p><input class="code" id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••"><div class="err" id="er2"></div><button class="btn y full">Entrar</button><button type="button" class="btn w full" id="bBack" style="margin-top:8px">Trocar e-mail</button></form>
   <p class="muted" style="margin-top:18px;font-size:13px">${deTeste || ls("cnm_guest") ? `<a href="#/hoje" id="bVolta">‹ Voltar para o teste grátis</a>` : `Ainda não tem o kit? <a href="${esc(CFG.SITE)}">Conheça aqui</a>`}</p></div></div>`;
@@ -767,13 +767,19 @@ function viewLogin(msg, deTeste) {
   if (uC) uC.onclick = e => { e.preventDefault(); fE.hidden = true; fP.hidden = false; };
   const ci = document.getElementById("cpf");
   ci.oninput = () => { let d = ci.value.replace(/\D/g, "").slice(0, 11); ci.value = d.replace(/^(\d{3})(\d)/, "$1.$2").replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1-$2"); };
+  function ligaEsqueci() { const x = document.getElementById("bEsq"); if (x) x.onclick = ev => { ev.preventDefault(); ls("cnm_reset", "1"); fP.hidden = true; fE.hidden = false; fE.querySelector(".err").textContent = "Digite seu e-mail. Vamos te mandar um código para entrar e criar uma senha nova."; }; }
   fP.onsubmit = async e => {
     e.preventDefault(); const er = document.getElementById("erP"), d = ci.value.replace(/\D/g, "");
     if (d.length !== 11) { er.textContent = "Digite os 11 números do seu CPF."; return; }
     const b = fP.querySelector("button"); b.disabled = true; b.textContent = "Entrando..."; er.textContent = "";
     try {
-      const r = await fetch((CFG.API || "https://entrega-caneta.vercel.app") + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cpf: d }) });
+      const bs = document.getElementById("boxSenha"), se = document.getElementById("senha"), senha = bs.hidden ? "" : se.value;
+      if (!bs.hidden && !senha) { er.textContent = "Digite sua senha."; return; }
+      const r = await fetch((CFG.API || "https://entrega-caneta.vercel.app") + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cpf: d, senha }) });
       const j = await r.json().catch(() => ({}));
+      if (j.precisa_senha) { bs.hidden = false; se.focus(); er.innerHTML = `<span style="color:#4b587c">Que bom te ver de novo! Digite a senha que você criou.</span> <a href="#" id="bEsq">Esqueci minha senha</a>`; ligaEsqueci(); return; }
+      if (r.status === 401) { er.innerHTML = `Senha incorreta. <a href="#" id="bEsq">Esqueci minha senha</a>`; ligaEsqueci(); return; }
+      if (j.access_token) { const { error } = await sb.auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token }); if (error) { er.textContent = "Não deu para entrar agora. Tente de novo."; return; } ls("cnm_email", j.email); GUEST = false; boot(); return; }
       if (r.status === 404) { er.innerHTML = `Não achamos uma compra com este CPF.<br>Acabou de comprar? Espere uns 5 minutos e tente de novo. Ou <a href="#" id="bErrEmail">entre pelo e-mail</a>.`; const x = document.getElementById("bErrEmail"); if (x) x.onclick = ev => { ev.preventDefault(); fP.hidden = true; fE.hidden = false; }; return; }
       if (!r.ok || !j.token_hash) { er.textContent = j.msg || "Não deu para entrar agora. Tente pelo e-mail."; return; }
       let { error } = await sb.auth.verifyOtp({ token_hash: j.token_hash, type: "magiclink" });
@@ -807,6 +813,26 @@ function viewLogin(msg, deTeste) {
     b.disabled = false;
     if (error) { document.getElementById("er2").textContent = "Código inválido ou vencido."; return; }
     GUEST = false; boot();
+  };
+}
+
+function viewCriaSenha() {
+  const reset = ls("cnm_reset") === "1";
+  $app.innerHTML = `<div class="login"><div class="box"><div class="onb-ic" style="font-size:40px">🔐</div><h1 class="pg" style="margin-bottom:6px">${reset ? "Crie uma senha nova" : "Crie sua senha"}</h1>
+  <p class="muted">${reset ? "" : "Seu acesso está liberado! 🎉 "}Crie uma senha para proteger sua conta. Da próxima vez, é só entrar com seu <b>CPF</b> e essa <b>senha</b>.</p>
+  <form id="fS"><input type="password" id="s1" autocomplete="new-password" placeholder="Nova senha (mín. 6 caracteres)"><input type="password" id="s2" autocomplete="new-password" placeholder="Repita a senha" style="margin-top:8px"><div class="err" id="erS"></div><button class="btn y full">Salvar e entrar</button></form></div></div>`;
+  document.getElementById("fS").onsubmit = async e => {
+    e.preventDefault(); const a = document.getElementById("s1").value, b = document.getElementById("s2").value, er = document.getElementById("erS");
+    if (a.length < 6) { er.textContent = "A senha precisa ter pelo menos 6 letras ou números."; return; }
+    if (a !== b) { er.textContent = "As duas senhas não estão iguais."; return; }
+    const bt = e.target.querySelector("button"); bt.disabled = true; bt.textContent = "Salvando...";
+    const { data, error } = await sb.auth.updateUser({ password: a, data: { tem_senha: true } });
+    bt.disabled = false; bt.textContent = "Salvar e entrar";
+    if (error) { er.textContent = /different|same/i.test(error.message) ? "Use uma senha diferente da anterior." : /weak|short|least/i.test(error.message) ? "Senha fraca. Use pelo menos 6 letras ou números." : "Não deu para salvar. Tente de novo."; return; }
+    try { localStorage.removeItem("cnm_reset"); } catch (x) {}
+    try { clarity("event", reset ? "senha_nova" : "senha_criada"); } catch (x) {}
+    if (data && data.user) user = data.user;
+    boot();
   };
 }
 
@@ -853,6 +879,7 @@ async function boot() {
         if (!cargos.length) { if (g && NOMES_KIT[g] && ss_semAcesso) { GUEST = true; cargos = [g + "-amostra"]; } else return viewSemAcesso(g && NOMES_KIT[g] ? g : ""); }
       }
     }
+    if (!DEMO && !GUEST && user && cargos.some(c => !/-amostra$/.test(c)) && (!(user.user_metadata || {}).tem_senha || ls("cnm_reset") === "1")) return viewCriaSenha();
     ACC = cargos;
     BASES = [...new Set(cargos.filter(c => !/-(plano|audio)$/.test(c)).map(base))];
     if (!BASES.length) return viewSemAcesso();
