@@ -138,8 +138,7 @@ const passed = code => !!(P.pass && P.pass[code]);
 function stars(code) { return (P.star && P.star[code]) || 0; }
 function unlocked(code, i, seq) {
   const a = AS[code]; if (!a || a.bloq) return false;
-  if (TRIAL) return true;
-  return i === 0 || passed(seq[i - 1]) || passed(code) || !!P.studied[code];
+  return true; // tudo liberado: quem comprou estuda na ordem que quiser (a trilha só sugere a próxima fase)
 }
 function rusty(code) { const d = revDue(code); return d !== Infinity && day0() - d >= 3 * DAY; }
 // ordem das questões: erradas primeiro, depois as nunca feitas, depois as mais antigas
