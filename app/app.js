@@ -755,12 +755,34 @@ function sugereEmail(e){
 let EMAIL_OK = "";
 function viewLogin(msg, deTeste) {
   $app.innerHTML = `<div class="login"><div class="box"><div class="brand" style="color:var(--navy);margin-bottom:18px">${LOGO}<div>caneta<small style="color:var(--blue)">na mão</small></div></div>
-  <h1 class="pg" style="margin-bottom:6px">Entrar no app</h1><p class="muted">Use o e-mail da sua compra. Vamos te mandar um e-mail com um botão para entrar.</p>
-  <form id="fE"><input type="email" id="em" required placeholder="seu@email.com" autocomplete="email" value="${esc(ls("cnm_email") || "")}"><div class="err">${esc(msg || "")}</div><button class="btn y full">Receber e-mail de acesso</button></form>
+  <h1 class="pg" style="margin-bottom:6px">Entrar no app</h1>
+  <form id="fP"${msg ? " hidden" : ""}><p class="muted">Comprou o kit? Digite o <b>CPF</b> que você usou na compra:</p><input id="cpf" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" style="font-size:22px;letter-spacing:1px;text-align:center"><div class="err" id="erP"></div><button class="btn y full">Entrar</button><p class="muted" style="margin-top:14px;font-size:14px"><a href="#" id="bUsaEmail">Prefiro entrar pelo e-mail</a></p></form>
+  <form id="fE"${msg ? "" : " hidden"}><p class="muted">Use o e-mail da sua compra. Vamos te mandar um e-mail com um botão para entrar.</p><input type="email" id="em" required placeholder="seu@email.com" autocomplete="email" value="${esc(ls("cnm_email") || "")}"><div class="err">${esc(msg || "")}</div><button class="btn y full">Receber e-mail de acesso</button><p class="muted" style="margin-top:14px;font-size:14px"><a href="#" id="bUsaCpf">‹ Entrar com o CPF</a></p></form>
   <form id="fC" hidden><div class="onb-ic" style="font-size:40px">📩</div><p id="sentTo"></p><p class="muted" style="margin-bottom:4px">Ou digite aqui o código de 6 números que veio no e-mail:</p><input class="code" id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="••••••"><div class="err" id="er2"></div><button class="btn y full">Entrar</button><button type="button" class="btn w full" id="bBack" style="margin-top:8px">Trocar e-mail</button></form>
   <p class="muted" style="margin-top:18px;font-size:13px">${deTeste || ls("cnm_guest") ? `<a href="#/hoje" id="bVolta">‹ Voltar para o teste grátis</a>` : `Ainda não tem o kit? <a href="${esc(CFG.SITE)}">Conheça aqui</a>`}</p></div></div>`;
   const bv = document.getElementById("bVolta"); if (bv) bv.onclick = e => { e.preventDefault(); location.hash = "#/hoje"; boot(); };
-  const fE = document.getElementById("fE"), fC = document.getElementById("fC");
+  const fE = document.getElementById("fE"), fC = document.getElementById("fC"), fP = document.getElementById("fP");
+  const uE = document.getElementById("bUsaEmail"), uC = document.getElementById("bUsaCpf");
+  if (uE) uE.onclick = e => { e.preventDefault(); fP.hidden = true; fE.hidden = false; };
+  if (uC) uC.onclick = e => { e.preventDefault(); fE.hidden = true; fP.hidden = false; };
+  const ci = document.getElementById("cpf");
+  ci.oninput = () => { let d = ci.value.replace(/\D/g, "").slice(0, 11); ci.value = d.replace(/^(\d{3})(\d)/, "$1.$2").replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1-$2"); };
+  fP.onsubmit = async e => {
+    e.preventDefault(); const er = document.getElementById("erP"), d = ci.value.replace(/\D/g, "");
+    if (d.length !== 11) { er.textContent = "Digite os 11 números do seu CPF."; return; }
+    const b = fP.querySelector("button"); b.disabled = true; b.textContent = "Entrando..."; er.textContent = "";
+    try {
+      const r = await fetch((CFG.API || "https://entrega-caneta.vercel.app") + "/api/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cpf: d }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 404) { er.innerHTML = `Não achamos uma compra com este CPF.<br>Acabou de comprar? Espere uns 5 minutos e tente de novo. Ou <a href="#" id="bErrEmail">entre pelo e-mail</a>.`; const x = document.getElementById("bErrEmail"); if (x) x.onclick = ev => { ev.preventDefault(); fP.hidden = true; fE.hidden = false; }; return; }
+      if (!r.ok || !j.token_hash) { er.textContent = j.msg || "Não deu para entrar agora. Tente pelo e-mail."; return; }
+      let { error } = await sb.auth.verifyOtp({ token_hash: j.token_hash, type: "magiclink" });
+      if (error) ({ error } = await sb.auth.verifyOtp({ token_hash: j.token_hash, type: "email" }));
+      if (error) { er.textContent = "Não deu para entrar agora. Tente pelo e-mail."; return; }
+      ls("cnm_email", j.email); try { clarity("event", "login_cpf"); } catch (x) {} GUEST = false; boot();
+    } catch (x) { er.textContent = "Sem conexão. Confira a internet e tente de novo."; }
+    finally { b.disabled = false; b.textContent = "Entrar"; }
+  };
   fE.onsubmit = async e => {
     e.preventDefault(); const email = document.getElementById("em").value.trim().toLowerCase();
     const sug = sugereEmail(email), er = fE.querySelector(".err");
