@@ -510,8 +510,29 @@ function summary() {
   const ag = document.getElementById("bAgain"); if (ag) ag.onclick = () => startSession("f", code);
   SES = null;
   checaMedalhas();
+  if (TRIAL) setTimeout(() => ofertaTrial(ok, r.length), 1200);
   if (P._lvup) { const nv = nivel(); delete P._lvup; save(); const old = document.querySelector(".sheet .bd"); const html = `<div class="lvup"><div class="lvn">${nv.n}</div><div style="font-weight:800;font-size:20px;margin-top:10px">Subiu de nível! 🎉</div><div class="muted" style="font-size:16px">Agora você é <b style="color:var(--blue)">${esc(nv.nome)}</b></div>${nv.prox ? `<p class="muted">Próximo nível: ${esc(nv.prox)} (${nv.ate.toLocaleString("pt-BR")} XP)</p>` : ""}</div>`;
     if (old) old.insertAdjacentHTML("afterbegin", html + "<hr style='border:0;border-top:1px solid var(--line);margin:14px 0'>"); else sheet("Parabéns! 🎉", html + `<button class="btn y full" style="margin-top:12px" onclick="this.closest('.sheet').remove()">Bora!</button>`); }
+}
+
+function ofertaTrial(ok, n) {
+  const hoje = String(day0()), fim = Object.keys(C.questoes || {}).every(id => P.ans[id]);
+  if (!fim && ls("cnm_ofr_" + C.cargo) === hoje) return;
+  ls("cnm_ofr_" + C.cargo, hoje);
+  const feitas = Object.keys(P.ans).filter(id => BY[id]).length, tot = Object.keys(C.questoes || {}).length;
+  const dias = Math.max(0, Math.ceil((new Date(C.prova + "T08:00:00") - Date.now()) / DAY));
+  const titulo = fim ? "Você terminou o teste grátis! 🎉" : `Você acertou ${ok} de ${n} 👏`;
+  sheet(fim ? "Teste concluído" : "Seu resultado", `<div style="text-align:center"><div style="font-size:22px;font-weight:800;line-height:1.25">${titulo}</div>
+  <p class="muted" style="margin:6px 0 0">Você já fez ${feitas} das ${tot} questões grátis. Faltam <b>${dias} dias</b> para a prova.</p></div>
+  <div class="card" style="margin-top:14px"><div style="font-weight:800;margin-bottom:6px">No kit completo de ${esc(C.nome)}:</div>
+  <div>✅ <b>${C.nq_total || ""} questões</b> da banca ACCESS, corrigidas na hora</div><div>✅ Teoria de todos os <b>${allAs().length} assuntos</b> do edital</div><div>✅ Simulados como na prova</div><div>✅ Apostila e caderno de questões em <b>PDF</b> para imprimir</div><div>✅ Seu progresso de hoje continua salvo</div></div>
+  <div style="text-align:center;margin-top:14px"><div style="font-size:30px;font-weight:800">R$ ${esc(C.preco || "")}</div><div class="muted">pagamento único · Pix ou cartão</div></div>
+  <a class="btn y full" id="bOfr" style="margin-top:12px" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Quero o kit completo</a>
+  <p class="muted" style="text-align:center;margin:10px 0 0;font-size:14px">🔒 7 dias de garantia: se não gostar, devolvemos 100%.</p>
+  <button class="btn w full" id="bOfrNao" style="margin-top:8px">Agora não</button>`);
+  try { clarity("event", fim ? "oferta_fim_teste" : "oferta_teste"); } catch (e) {}
+  const b = document.getElementById("bOfr"); if (b) b.onclick = () => { try { clarity("event", "oferta_clique"); } catch (e) {} };
+  const x = document.getElementById("bOfrNao"); if (x) x.onclick = () => { const s = x.closest(".sheet"); if (s) s.remove(); };
 }
 
 function sheet(title, html) {
