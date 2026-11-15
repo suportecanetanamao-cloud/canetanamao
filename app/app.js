@@ -752,7 +752,7 @@ function route() {
     case "comece": return viewComece(p[1]);
     case "instalar": return viewInstalar();
     default:
-      if (!ls("cnm_onb") && !P.onb) return go("#/comece");
+      if (!ls("cnm_onb") && !P.onb) { if (GUEST) { marcaOnb(); const a0 = allAs().find(a => !a.bloq && (ASQ[a.code] || []).length); if (a0) return go("#/q/f/" + a0.code); } return go("#/comece"); }
       return viewTrilha();
   }
 }
@@ -773,6 +773,14 @@ function sugereEmail(e){
   return "";
 }
 let EMAIL_OK = "";
+function viewTeste() {
+  $app.innerHTML = `<div class="login"><div class="box"><div class="brand" style="color:var(--navy);margin-bottom:18px">${LOGO}<div>caneta<small style="color:var(--blue)">na mão</small></div></div>
+  <h1 class="pg" style="margin-bottom:6px">Teste grátis do app</h1><p class="muted">Toque no seu cargo e comece agora, sem cadastro:</p>
+  <div class="stack">${Object.keys(NOMES_KIT).map(k => `<button class="btn b full" data-t="${k}">${esc(NOMES_KIT[k])}</button>`).join("")}</div>
+  <div class="card" style="margin-top:22px"><div style="font-weight:800">Já comprou o kit?</div><button class="btn y full" id="bLogin" style="margin-top:10px">Entrar com meu CPF</button></div></div></div>`;
+  document.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { ls("cnm_guest", b.dataset.t); ls("cnm_cargo", b.dataset.t); try { clarity("event", "teste_escolha"); } catch (e) {} boot(); });
+  document.getElementById("bLogin").onclick = () => viewLogin();
+}
 function viewLogin(msg, deTeste) {
   $app.innerHTML = `<div class="login"><div class="box"><div class="brand" style="color:var(--navy);margin-bottom:18px">${LOGO}<div>caneta<small style="color:var(--blue)">na mão</small></div></div>
   <h1 class="pg" style="margin-bottom:6px">Entrar no app</h1>
@@ -889,7 +897,7 @@ async function boot() {
       if (!data.session) {
         if (erroLink) return viewLogin("O link de acesso venceu. Peça um novo aqui embaixo.");
         if (g && NOMES_KIT[g]) { GUEST = true; user = { id: "guest", email: "" }; cargos = [g + "-amostra"]; }
-        else return viewLogin();
+        else return viewTeste();
       } else {
         GUEST = false; user = data.session.user;
         let r = await sb.from("acessos").select("cargo,nome");
