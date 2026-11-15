@@ -149,19 +149,23 @@ function calc(){
   vendasAp.forEach(function(v){ if (dia(v.criado) < ini) return; nv++; var val = Number(v.valor)||0; var tx = v.taxa!=null ? Number(v.taxa) : (val ? val*D.taxa.pct/100 + D.taxa.fixa : 0); fat += val; taxa += tx; liq += v.liquido!=null ? Number(v.liquido) : val - tx; });
   compras.forEach(function(c){ if (temVenda[(c.email||"") + "|" + c.cargo]) return; var p = Number(String(D.precos[c.cargo]||"0").replace(",","."))||0; if(!p) return; var tx = p*D.taxa.pct/100 + D.taxa.fixa; fat += p; taxa += tx; liq += p - tx; est++; });
   var gasto = 0; D.gastos.forEach(function(g){ if (g.dia >= ini) gasto += Number(g.gasto)||0; });
-  var lucro = liq - gasto;
+  var fixo = 0, iniF = ini;
+  if (ini === "0000-00-00"){ iniF = null; (D.custos || []).forEach(function(cf){ if (!iniF || String(cf.inicio) < iniF) iniF = String(cf.inicio); }); }
+  if (iniF){ var hj = hojeBR(); for (var dd = new Date(iniF + "T12:00:00Z"); dd.toISOString().slice(0,10) <= hj; dd = new Date(dd.getTime() + 86400000)) fixo += custoDia(dd.toISOString().slice(0,10)); }
+  var lucro = liq - gasto - fixo;
   var semana = menosDias(6), ativos = {}; D.uso.forEach(function(u){ if (dia(u.t) >= semana) ativos[u.u] = 1; });
-  return {testes:testes, compras:compras, reemb:reemb, carr:carr, fat:fat, taxa:taxa, liq:liq, est:est, nv:nv, gasto:gasto, lucro:lucro, ativos:Object.keys(ativos).length};
+  return {testes:testes, compras:compras, reemb:reemb, carr:carr, fat:fat, taxa:taxa, liq:liq, est:est, nv:nv, gasto:gasto, fixo:fixo, lucro:lucro, ativos:Object.keys(ativos).length};
 }
 
+function custoDia(d){ var s = 0; (D.custos || []).forEach(function(cf){ if (String(cf.inicio) <= d && (!cf.fim || d <= String(cf.fim))) s += (Number(cf.valor)||0) / 30.4375; }); return s; }
 function porDia(nDias){
   var dias = [], m = {};
-  for (var i = nDias-1; i >= 0; i--){ var d = menosDias(i); dias.push(d); m[d] = {t:0, c:0, g:0, l:0}; }
+  for (var i = nDias-1; i >= 0; i--){ var d = menosDias(i); dias.push(d); m[d] = {t:0, c:0, g:0, l:0, f:custoDia(d)}; }
   D.testes.forEach(function(t){ var d = dia(t.criado); if (m[d]) m[d].t++; });
   D.compras.forEach(function(c){ if (/-(plano|audio)$/.test(c.cargo)) return; var d = dia(c.criado); if (m[d]) m[d].c++; });
   D.gastos.forEach(function(g){ if (m[g.dia]) m[g.dia].g += Number(g.gasto)||0; });
   D.vendas.forEach(function(v){ if (v.status !== "aprovada") return; var d = dia(v.criado); if (m[d]) m[d].l += v.liquido!=null ? Number(v.liquido) : 0; });
-  return dias.map(function(d){ return {d:d, t:m[d].t, c:m[d].c, g:m[d].g, l:m[d].l}; });
+  return dias.map(function(d){ return {d:d, t:m[d].t, c:m[d].c, g:m[d].g, l:m[d].l, f:m[d].f}; });
 }
 
 function grafico(linhas){
@@ -198,7 +202,7 @@ function viewResumo(){
     kpi("Testes grátis", int(c.testes.length), "pessoas que liberaram o teste") +
     kpi("Compras", int(c.compras.length), "conversão " + pct(c.compras.length, c.testes.length)) +
     kpi("Faturamento", brl(c.fat), c.est ? c.est + " venda(s) estimada(s)" : "valor bruto das vendas") +
-    kpi("Lucro", luc, "líquido − anúncios", " big") +
+    kpi("Lucro", luc, c.fixo ? "depois de anúncios e custos fixos" : "líquido − anúncios", " big") +
     kpi("Gasto com anúncios", brl(c.gasto), c.compras.length ? "custo por venda " + brl(c.gasto / c.compras.length) : "") +
     kpi("Custo por teste", c.testes.length ? brl(c.gasto / c.testes.length) : "–", "anúncio ÷ testes") +
     kpi("Reembolsos", int(c.reemb.length), c.carr.length + " carrinho(s) abandonado(s)") +
@@ -225,22 +229,28 @@ function viewDinheiro(){
     kpi("Taxas Lastlink", brl(c.taxa), D.taxa.pct + "% + " + brl(D.taxa.fixa) + " por venda") +
     kpi("Líquido", brl(c.liq), "o que cai para você") +
     kpi("Gasto com anúncios", brl(c.gasto), "") +
-    kpi("Lucro", '<span class="' + (c.lucro >= 0 ? "pos" : "neg") + '">' + brl(c.lucro) + '</span>', "líquido − anúncios", " big") +
+    kpi("Lucro", '<span class="' + (c.lucro >= 0 ? "pos" : "neg") + '">' + brl(c.lucro) + '</span>', "líquido − anúncios − custos fixos", " big") +
     kpi("Retorno por R$ 1", c.gasto ? "R$ " + (c.fat / c.gasto).toFixed(2).replace(".", ",") : "–", "faturamento ÷ anúncio") +
     kpi("Custo por venda", c.compras.length ? brl(c.gasto / c.compras.length) : "–", "") +
-    kpi("Ticket médio", c.nv ? brl(D.vendas.filter(function(v){ return v.status==="aprovada" && noPer(v.criado); }).reduce(function(a,v){ return a + (Number(v.valor)||0); }, 0) / c.nv) : "–", "") + '</div>';
+    kpi("Custos fixos", brl(c.fixo), (D.custos || []).filter(function(x){ return !x.fim; }).length + " assinatura(s) ativa(s), no período") + '</div>';
   if (c.est) h += '<div class="note">' + c.est + ' compra(s) antiga(s) ainda não estão na tabela de vendas e entraram com o preço do kit (estimado). Para ficar exato, importe a planilha de vendas da Lastlink aqui embaixo.</div>';
   // por dia
   var nd = PER === "hoje" ? 1 : PER === "7" ? 7 : 30;
   var linhas = porDia(nd).reverse();
-  h += '<details class="dobra" id="ddDia"' + (ls("cnm_dd_dia") === "1" ? " open" : "") + '><summary><h2>Dia a dia</h2><span class="muted">tocar para abrir/fechar</span></summary><div class="card tw"><table><thead><tr><th>Dia</th><th class="n">Testes</th><th class="n">Compras</th><th class="n">Anúncio R$</th><th class="n">Líquido R$</th><th class="n">Lucro R$</th></tr></thead><tbody>' +
-    linhas.map(function(x){ var l = x.l - x.g; return '<tr><td>' + fdia(x.d) + '</td><td class="n">' + x.t + '</td><td class="n">' + x.c + '</td><td class="n">' + (x.g ? num(x.g) : "–") + '</td><td class="n">' + (x.l ? num(x.l) : "–") + '</td><td class="n ' + (l >= 0 ? "pos" : "neg") + '">' + ((x.l || x.g) ? num(l) : "–") + '</td></tr>'; }).join("") + '</tbody></table></div></details>';
+  h += '<details class="dobra" id="ddDia"' + (ls("cnm_dd_dia") === "1" ? " open" : "") + '><summary><h2>Dia a dia</h2><span class="muted">tocar para abrir/fechar</span></summary><div class="card tw"><table><thead><tr><th>Dia</th><th class="n">Testes</th><th class="n">Compras</th><th class="n">Anúncio R$</th><th class="n">Fixos R$</th><th class="n">Líquido R$</th><th class="n">Lucro R$</th></tr></thead><tbody>' +
+    linhas.map(function(x){ var l = x.l - x.g - x.f; return '<tr><td>' + fdia(x.d) + '</td><td class="n">' + x.t + '</td><td class="n">' + x.c + '</td><td class="n">' + (x.g ? num(x.g) : "–") + '</td><td class="n">' + (x.f ? num(x.f) : "–") + '</td><td class="n">' + (x.l ? num(x.l) : "–") + '</td><td class="n ' + (l >= 0 ? "pos" : "neg") + '">' + ((x.l || x.g || x.f) ? num(l) : "–") + '</td></tr>'; }).join("") + '</tbody></table></div></details>';
   // campanhas
   var ini = inicioPer(), camp = {};
   D.gastos.forEach(function(g){ if (g.dia < ini) return; var k = g.campanha || g.campanha_id; camp[k] = camp[k] || {g:0, cl:0, im:0}; camp[k].g += Number(g.gasto)||0; camp[k].cl += Number(g.cliques)||0; camp[k].im += Number(g.impressoes)||0; });
   var ks = Object.keys(camp).sort(function(a,b){ return camp[b].g - camp[a].g; });
   h += '<h2>Anúncios por campanha</h2><div class="card tw">' + (ks.length ? '<table><thead><tr><th>Campanha</th><th class="n">Gasto</th><th class="n">Cliques</th><th class="n">Custo/clique</th></tr></thead><tbody>' +
     ks.map(function(k){ var x = camp[k]; return '<tr><td>' + esc(k) + '</td><td class="n">' + brl(x.g) + '</td><td class="n">' + (x.cl || "–") + '</td><td class="n">' + (x.cl ? brl(x.g / x.cl) : "–") + '</td></tr>'; }).join("") + '</tbody></table>' : '<div class="empty">Nenhum gasto no período.</div>') + '</div>';
+  // custos fixos
+  var cfs = (D.custos || []).slice().sort(function(a,b){ return (a.fim ? 1 : 0) - (b.fim ? 1 : 0); });
+  var mesHoje = hojeBR().slice(0,7);
+  h += '<h2>Custos fixos mensais</h2><div class="card"><p class="muted" style="margin:0 0 10px">Assinaturas e ferramentas (Claude, ElevenLabs, Kling…). O valor do mês é dividido pelos dias e descontado do lucro.</p>' +
+    (cfs.length ? '<div class="tw"><table><thead><tr><th>Custo</th><th class="n">Por mês</th><th>Desde</th><th></th></tr></thead><tbody>' + cfs.map(function(x){ return '<tr' + (x.fim ? ' style="opacity:.55"' : '') + '><td>' + esc(x.nome) + (x.fim ? ' <span class="pill">encerrado ' + fdia(String(x.fim)) + '</span>' : '') + '</td><td class="n">' + brl(x.valor) + '</td><td>' + String(x.inicio).slice(5,7) + '/' + String(x.inicio).slice(0,4) + '</td><td class="n">' + (x.fim ? '' : '<button class="btn g s" data-cfim="' + x.id + '">Cancelei</button> ') + '<button class="x" data-cdel="' + x.id + '" title="Apagar">×</button></td></tr>'; }).join('') + '</tbody></table></div>' : '<div class="empty">Nenhum custo cadastrado.</div>') +
+    '<form class="form" id="fC" style="margin-top:12px"><input class="inp" id="cN" placeholder="Nome (ex.: Claude Pro)" maxlength="80"><input class="inp" id="cV" inputmode="decimal" placeholder="Valor por mês (R$)" style="max-width:170px"><input class="inp" type="month" id="cI" value="' + mesHoje + '" style="max-width:170px" title="Desde quando"><button class="btn s">Adicionar</button></form><div class="err" id="cE"></div></div>';
   // gasto manual + meta + importação
   h += '<div class="cols"><div><h2>Lançar gasto à mão</h2><div class="card"><p class="muted" style="margin:0 0 10px">Use enquanto o Meta não está ligado. O valor do dia substitui o anterior.</p>' +
     '<form class="form" id="fG"><input class="inp" type="date" id="gD" value="' + hojeBR() + '" style="max-width:170px"><input class="inp" id="gV" inputmode="decimal" placeholder="Valor (ex.: 20,00)" style="max-width:170px"><button class="btn s">Salvar</button></form><div class="err" id="gE"></div></div>' +
@@ -365,6 +375,10 @@ function liga(){
   document.querySelectorAll("[data-desfaz]").forEach(function(b){ b.onclick = function(){ marca(b.dataset.desfaz, "", true); render(); }; });
   document.querySelectorAll("[data-zap]").forEach(function(a){ a.addEventListener("click", function(){ if (a.dataset.mot !== "comprou" && !contatoDe(a.dataset.zap)) { marca(a.dataset.zap, a.dataset.mot); setTimeout(render, 300); } }); });
   var dd = document.getElementById("ddDia"); if (dd) dd.addEventListener("toggle", function(){ ls("cnm_dd_dia", dd.open ? "1" : "0"); });
+  var fC = document.getElementById("fC");
+  if (fC) fC.onsubmit = function(e){ e.preventDefault(); api("POST", {acao:"custo_add", nome:document.getElementById("cN").value, valor:document.getElementById("cV").value, inicio:document.getElementById("cI").value}).then(function(j){ if (!j.ok){ document.getElementById("cE").textContent = j.msg || "Não salvou."; return; } if (j.item){ D.custos = D.custos || []; D.custos.push(j.item); } render(); }); };
+  document.querySelectorAll("[data-cfim]").forEach(function(b){ b.onclick = function(){ api("POST", {acao:"custo_fim", id:Number(b.dataset.cfim)}).then(function(j){ (D.custos || []).forEach(function(x){ if (String(x.id) === b.dataset.cfim) x.fim = j.fim; }); render(); }); }; });
+  document.querySelectorAll("[data-cdel]").forEach(function(b){ b.onclick = function(){ if (b.dataset.conf !== "1"){ b.dataset.conf = "1"; b.textContent = "apagar?"; b.style.fontSize = "12px"; b.style.color = "#D23B3B"; return; } D.custos = (D.custos || []).filter(function(x){ return String(x.id) !== b.dataset.cdel; }); render(); api("POST", {acao:"custo_del", id:Number(b.dataset.cdel)}); }; });
   var fx = document.getElementById("fx");
   if (fx) fx.onchange = function(){ importa(fx.files[0]); };
 }
