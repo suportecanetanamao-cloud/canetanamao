@@ -251,6 +251,7 @@ function viewTrilha() {
   <div class="tstats"><div><b>🔥 ${st}</b><span>${st === 1 ? "dia seguido" : "dias seguidos"}</span></div><div><b>⭐ ${(P.xp || 0).toLocaleString("pt-BR")}</b><span>XP${hoje ? " · +" + hoje + " hoje" : ""}</span></div><div><b>🏁 ${nPass}/${seq.length}</b><span>fases</span></div></div>
   ${rt ? `<div class="tmeta"><div class="row"><div class="grow">Meta da semana: <b>${Math.min(semPass, rt.n)}/${rt.n} fases</b></div><a href="#/comece/4">mudar</a></div><div class="bar"><i style="width:${pct(Math.min(semPass, rt.n), rt.n)}%"></i></div></div>` : `<a class="tmeta" href="#/comece/4" style="display:block;text-decoration:none;color:inherit">🎯 <b>Defina seu ritmo</b> e ganhe uma meta da semana ›</a>`}</div>
   ${!nome ? `<a class="card task" href="#/perfil/nome" style="margin-top:12px"><div class="ic">✏️</div><div class="grow"><div class="t">Como você quer ser chamado(a)?</div><div class="muted">Toque para colocar seu nome</div></div><div class="go">›</div></a>` : ""}
+  ${TRIAL ? (GUEST ? `<a class="card task jaComprei" href="#" style="margin-top:12px"><div class="ic">🔑</div><div class="grow"><div class="t">Já comprou o kit?</div><div class="muted">Você está no teste grátis. Toque aqui e entre com o CPF da compra</div></div><div class="go">›</div></a>` : "") : `<a class="card task" href="#/perfil/materiais" style="margin-top:12px"><div class="ic">🖨️</div><div class="grow"><div class="t">Apostila e caderno para imprimir</div><div class="muted">PDFs com o seu nome, para baixar ou imprimir</div></div><div class="go">›</div></a>`}
   <h2 class="sec">Missões de hoje</h2><div class="miss">${missoes}</div>
   <h2 class="sec" style="margin-bottom:4px">Trilha</h2><p class="muted" style="margin:0 0 6px">Na ordem do que mais cai. Passe com ${Math.round(PASSA * 100)}% de acerto para liberar a próxima fase.</p>
   <div class="path">${path}<div class="nodew"><div class="node fim"><span class="ni">🏆</span></div><div class="nl"><b>Prova · 14/02/2027</b></div></div></div>
@@ -308,7 +309,7 @@ function shell(active, body, top) {
   const nav = [["hoje", "Trilha", ICON.hoje], ["estudar", "Estudar", ICON.estudar], ["erros", "Erros", ICON.erros], ["progresso", "Progresso", ICON.prog], ["perfil", "Perfil", ICON.perfil]]
     .map(([k, t, i]) => `<a href="#/${k}" class="${active === k ? "on" : ""}">${i}<span>${t}</span></a>`).join("");
   const tp = top || `<div class="brand">${LOGO}<div>caneta<small>na mão</small></div></div><div class="grow"></div><div class="sub">${esc(C.nome)}</div>`;
-  const buy = TRIAL ? `<a class="buybar" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener"><span><b>Teste grátis</b> · ${allAs().filter(x => !x.bloq).length} de ${allAs().length} assuntos</span><span class="bb">Quero o kit completo ›</span></a>` : "";
+  const buy = TRIAL ? `<div class="buybar"><span><b>Teste grátis</b> · ${allAs().filter(x => !x.bloq).length} de ${allAs().length} assuntos${GUEST ? `<a href="#" class="jaComprei" style="display:block;margin-top:3px;font-size:13px;font-weight:800;color:#FFC727;text-decoration:underline">Já comprei? Entrar ›</a>` : ""}</span><a class="bb" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener" style="text-decoration:none">Quero o kit completo ›</a></div>` : "";
   $app.innerHTML = `<div class="shell${TRIAL ? " trialmode" : ""}"><div class="top">${tp}</div><div class="main">${body}</div>${buy}<nav class="nav"><div class="nbrand">${LOGO}<div>caneta<small>na mão</small></div></div>${nav}</nav></div>`;
   window.scrollTo(0, 0);
 }
@@ -591,9 +592,9 @@ function viewPerfil(sub) {
   ${item("#/comece", "🚀", "Comece por aqui", "Como estudar com o app, em 1 minuto")}
   ${item("#/instalar", "📲", "Instalar no celular", "Vira um ícone na tela, como um aplicativo")}
   ${item("#/comece/4", "🎯", "Meu ritmo de estudo", RITMO[P.ritmo] ? RITMO[P.ritmo].t + " · " + RITMO[P.ritmo].n + " assuntos por semana" : "Defina quantas horas por dia")}</div>
-  ${audios()}<h2 class="sec">Meus materiais</h2>${materiais()}
+  ${audios()}<h2 class="sec" id="materiais" style="scroll-margin-top:90px">Meus materiais</h2>${materiais()}
   <h2 class="sec">Ajuda</h2><div class="stack">
-  ${item("mailto:" + esc(CFG.SUPORTE), "💬", "Falar com o suporte", esc(CFG.SUPORTE))}
+  ${item("https://wa.me/5518976042684", "💬", "Falar com o suporte", "WhatsApp (18) 97604-2684", 'target="_blank" rel="noopener"')}
   ${item("https://instagram.com/canetanamaoconcursos", "📷", "Instagram", "@canetanamaoconcursos", 'target="_blank" rel="noopener"')}</div>
   <h2 class="sec">Conta</h2><div class="stack">
   ${BASES.length > 1 ? `<button class="btn g full" id="bKit">Trocar de kit</button>` : ""}
@@ -606,6 +607,7 @@ function viewPerfil(sub) {
   document.querySelectorAll("[data-pdf]").forEach(b => b.onclick = () => abrePdf(b.dataset.pdf, b));
   document.querySelectorAll("[data-aud]").forEach(b => b.onclick = () => abreAudio(+b.dataset.aud));
   if (sub === "nome") editaNome(() => go("#/hoje"));
+  if (sub === "materiais") setTimeout(() => { const m = document.getElementById("materiais"); if (m) m.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
 }
 
 // ---------- comece por aqui ----------
@@ -757,6 +759,7 @@ function route() {
   }
 }
 window.addEventListener("hashchange", route);
+document.addEventListener("click", e => { const a = e.target.closest && e.target.closest(".jaComprei"); if (!a) return; e.preventDefault(); try { clarity("event", "ja_comprei"); } catch (x) {} viewLogin(); });
 
 // ---------- login ----------
 function sugereEmail(e){
@@ -886,7 +889,8 @@ async function boot() {
     // link do teste grátis: /app/?teste=enf&n=Maria
     const qs = new URLSearchParams(location.search), tq = qs.get("teste");
     if (tq && NOMES_KIT[tq]) { ls("cnm_guest", tq); ls("cnm_cargo", tq); if (qs.get("n") && !ls("cnm_nome")) ls("cnm_nome", qs.get("n").slice(0, 40)); }
-    if (tq || qs.get("n")) history.replaceState(null, "", location.pathname + location.hash);
+    if (qs.get("entrar")) { try { localStorage.removeItem("cnm_guest"); } catch (e) {} }
+    if (tq || qs.get("n") || qs.get("entrar")) history.replaceState(null, "", location.pathname + location.hash);
     if (DEMO) { user = { id: "demo", email: "aluna.demo@email.com" }; const dc = (location.search.match(/[?&]c=(\w+)/) || [])[1] || "tec"; cargos = /amostra/.test(location.search) ? [dc + "-amostra"] : [dc, dc + "-plano"]; }
     else {
       sb = sb || supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
@@ -897,7 +901,7 @@ async function boot() {
       if (!data.session) {
         if (erroLink) return viewLogin("O link de acesso venceu. Peça um novo aqui embaixo.");
         if (g && NOMES_KIT[g]) { GUEST = true; user = { id: "guest", email: "" }; cargos = [g + "-amostra"]; }
-        else return viewTeste();
+        else return qs.get("entrar") ? viewLogin() : viewTeste();
       } else {
         GUEST = false; user = data.session.user;
         let r = await sb.from("acessos").select("cargo,nome");
