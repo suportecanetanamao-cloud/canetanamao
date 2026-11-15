@@ -76,6 +76,10 @@ td.n,th.n{text-align:right}
 .empty{color:var(--mut);text-align:center;padding:20px 8px;font-size:14px}
 .cols{display:grid;gap:14px}
 @media(min-width:900px){.cols{grid-template-columns:1fr 1fr}}
+.dobra summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px}
+.dobra summary::-webkit-details-marker{display:none}
+.dobra summary h2::after{content:" ▸";color:var(--mut)}
+.dobra[open] summary h2::after{content:" ▾"}
 .load{padding:40px;text-align:center;color:var(--mut)}
 </style>
 </head>
@@ -229,8 +233,8 @@ function viewDinheiro(){
   // por dia
   var nd = PER === "hoje" ? 1 : PER === "7" ? 7 : 30;
   var linhas = porDia(nd).reverse();
-  h += '<h2>Dia a dia</h2><div class="card tw"><table><thead><tr><th>Dia</th><th class="n">Testes</th><th class="n">Compras</th><th class="n">Anúncio R$</th><th class="n">Líquido R$</th><th class="n">Lucro R$</th></tr></thead><tbody>' +
-    linhas.map(function(x){ var l = x.l - x.g; return '<tr><td>' + fdia(x.d) + '</td><td class="n">' + x.t + '</td><td class="n">' + x.c + '</td><td class="n">' + (x.g ? num(x.g) : "–") + '</td><td class="n">' + (x.l ? num(x.l) : "–") + '</td><td class="n ' + (l >= 0 ? "pos" : "neg") + '">' + ((x.l || x.g) ? num(l) : "–") + '</td></tr>'; }).join("") + '</tbody></table></div>';
+  h += '<details class="dobra" id="ddDia"' + (ls("cnm_dd_dia") === "1" ? " open" : "") + '><summary><h2>Dia a dia</h2><span class="muted">tocar para abrir/fechar</span></summary><div class="card tw"><table><thead><tr><th>Dia</th><th class="n">Testes</th><th class="n">Compras</th><th class="n">Anúncio R$</th><th class="n">Líquido R$</th><th class="n">Lucro R$</th></tr></thead><tbody>' +
+    linhas.map(function(x){ var l = x.l - x.g; return '<tr><td>' + fdia(x.d) + '</td><td class="n">' + x.t + '</td><td class="n">' + x.c + '</td><td class="n">' + (x.g ? num(x.g) : "–") + '</td><td class="n">' + (x.l ? num(x.l) : "–") + '</td><td class="n ' + (l >= 0 ? "pos" : "neg") + '">' + ((x.l || x.g) ? num(l) : "–") + '</td></tr>'; }).join("") + '</tbody></table></div></details>';
   // campanhas
   var ini = inicioPer(), camp = {};
   D.gastos.forEach(function(g){ if (g.dia < ini) return; var k = g.campanha || g.campanha_id; camp[k] = camp[k] || {g:0, cl:0, im:0}; camp[k].g += Number(g.gasto)||0; camp[k].cl += Number(g.cliques)||0; camp[k].im += Number(g.impressoes)||0; });
@@ -360,6 +364,7 @@ function liga(){
   document.querySelectorAll("[data-chamei]").forEach(function(b){ b.onclick = function(){ marca(b.dataset.chamei, b.dataset.mot); render(); }; });
   document.querySelectorAll("[data-desfaz]").forEach(function(b){ b.onclick = function(){ marca(b.dataset.desfaz, "", true); render(); }; });
   document.querySelectorAll("[data-zap]").forEach(function(a){ a.addEventListener("click", function(){ if (a.dataset.mot !== "comprou" && !contatoDe(a.dataset.zap)) { marca(a.dataset.zap, a.dataset.mot); setTimeout(render, 300); } }); });
+  var dd = document.getElementById("ddDia"); if (dd) dd.addEventListener("toggle", function(){ ls("cnm_dd_dia", dd.open ? "1" : "0"); });
   var fx = document.getElementById("fx");
   if (fx) fx.onchange = function(){ importa(fx.files[0]); };
 }
