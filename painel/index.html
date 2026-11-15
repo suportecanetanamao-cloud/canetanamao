@@ -241,7 +241,7 @@ function viewDinheiro(){
   h += '<div class="cols"><div><h2>Lançar gasto à mão</h2><div class="card"><p class="muted" style="margin:0 0 10px">Use enquanto o Meta não está ligado. O valor do dia substitui o anterior.</p>' +
     '<form class="form" id="fG"><input class="inp" type="date" id="gD" value="' + hojeBR() + '" style="max-width:170px"><input class="inp" id="gV" inputmode="decimal" placeholder="Valor (ex.: 20,00)" style="max-width:170px"><button class="btn s">Salvar</button></form><div class="err" id="gE"></div></div>' +
     '<h2>Meta (anúncios)</h2><div class="card">' + (D.meta_ligado ? '<p style="margin:0 0 10px"><span class="pill ok">Ligado</span> O gasto entra sozinho todo dia às 6h.</p><button class="btn g s" id="bMeta">Buscar gastos agora</button><div class="muted" id="mE" style="margin-top:6px"></div>' : '<p style="margin:0"><span class="pill y">Ainda não ligado</span> Falta criar a chave de leitura no Gerenciador de Negócios.</p>') + '</div></div>' +
-    '<div><h2>Importar vendas da Lastlink</h2><div class="card"><p class="muted" style="margin:0 0 10px">Na Lastlink: Vendas → filtre todas as vendas → Exportar. Depois escolha o arquivo aqui. Pode importar de novo quando quiser, não duplica.</p>' +
+    '<div><h2>Importar vendas da Lastlink</h2><div class="card"><p class="muted" style="margin:0 0 10px">Na Lastlink: Vendas → filtre todas as vendas → Exportar. Depois escolha o arquivo aqui. Pode importar de novo quando quiser, não duplica. Também aceita a planilha de Leads (testes grátis) para puxar os telefones.</p>' +
     '<input type="file" id="fx" accept=".xlsx,.xls,.csv" class="inp"><div class="muted" id="xE" style="margin-top:8px"></div></div></div></div>';
   return h;
 }
@@ -379,6 +379,15 @@ function importa(arq){
   r.onload = function(){
     try {
       var wb = XLSX.read(new Uint8Array(r.result), {type:"array", cellDates:true});
+      var arr = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:null, raw:false});
+      if (String((arr[0] || []).join(" ")).indexOf("Status da venda") < 0) {
+        out.textContent = "Lendo os telefones dos testes…";
+        api("POST", {acao:"importar_leads", linhas:arr}).then(function(j){
+          out.textContent = j.ok ? "Pronto: telefone salvo para " + j.telefones + " pessoa(s)." : (j.msg || "Não deu para importar.");
+          if (j.ok) carrega();
+        });
+        return;
+      }
       var linhas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:null, raw:true});
       linhas = linhas.map(function(l){ var o = {}; Object.keys(l).forEach(function(k){ var v = l[k]; o[k] = /^Data/.test(k) ? iso(v) : (v instanceof Date ? iso(v) : v); }); return o; });
       out.textContent = "Enviando " + linhas.length + " linha(s)…";
