@@ -53,6 +53,7 @@ td.n,th.n{text-align:right}
 .pill.ok{background:var(--okbg);color:var(--ok)} .pill.bad{background:var(--badbg);color:var(--bad)} .pill.y{background:#FFF4D1;color:#8A6400}
 .people{display:flex;flex-direction:column;gap:8px}
 .person{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.person.feito{opacity:.6}
 .person .nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .zap{background:var(--zap);color:#fff;text-decoration:none;font-weight:800;font-size:13px;border-radius:10px;padding:8px 11px;white-space:nowrap}
 .inp{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff}
@@ -245,33 +246,53 @@ function viewDinheiro(){
   return h;
 }
 
-function zapLink(tel, nome, cargo, comprou){
+var MSG = {
+  expirada: function(p, c){ return "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Vi que o pagamento do kit de " + c + " não foi concluído. Aconteceu alguma coisa? Se quiser, te mando o link de novo."; },
+  recusada: function(p, c){ return "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Vi que o pagamento do kit de " + c + " não passou. Quer tentar no Pix? Te mando o link."; },
+  carrinho: function(p, c){ return "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Vi que você começou a compra do kit de " + c + ". Ficou alguma dúvida? Posso te ajudar."; },
+  teste: function(p, c){ return "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Vi que você testou o app de " + c + ". Conseguiu fazer as questões? Ficou com alguma dúvida?"; },
+  comprou: function(p, c){ return "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Conseguiu entrar no app e começar a estudar?"; }
+};
+var MOSTRA_CHAMADOS = false;
+function zapLink(tel, nome, cargo, motivo){
   var d = String(tel||"").replace(/\D/g, ""); if (d.length < 10) return "";
   if (!(d.indexOf("55") === 0 && d.length >= 12)) d = "55" + d;
   var p = String(nome||"").split(" ")[0]; p = p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : "";
-  var msg = comprou ? "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Conseguiu entrar no app e começar a estudar?" :
-    "Oi, " + p + "! Aqui é da Caneta na Mão 💙 Vi que você testou o app de " + (NOMES[cargo] || "estudos") + ". Conseguiu fazer as questões? Ficou com alguma dúvida?";
-  return "https://wa.me/" + d + "?text=" + encodeURIComponent(msg);
+  return "https://wa.me/" + d + "?text=" + encodeURIComponent(MSG[motivo](p, NOMES[baseCargo(cargo)] || "estudos"));
 }
-function pessoa(p, comprou, extra){
-  var z = zapLink(p.telefone, p.nome, p.cargo, comprou);
-  return '<div class="person"><div class="grow"><div class="nm">' + esc(p.nome || p.email) + '</div><div class="muted">' + esc(NOMES[baseCargo(p.cargo)] || p.cargo) + ' · ' + fdh(p.criado) + (extra || "") + '</div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis">' + esc(p.email) + '</div></div>' +
-    (z ? '<a class="zap" href="' + z + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '</div>';
+function contatoDe(email){ var c = null; (D.contatos || []).forEach(function(x){ if (x.email === email) c = x; }); return c; }
+function pessoa(p, motivo, extra){
+  var z = zapLink(p.telefone, p.nome, p.cargo, motivo), ct = motivo === "comprou" ? null : contatoDe(p.email);
+  var marca = motivo === "comprou" ? "" : (ct ? '<button class="btn g s" data-desfaz="' + esc(p.email) + '">✓ chamado ' + fdh(ct.quando).slice(0,5) + '</button>' : '<button class="btn g s" data-chamei="' + esc(p.email) + '" data-mot="' + motivo + '">Já chamei</button>');
+  return '<div class="person' + (ct ? ' feito' : '') + '"><div class="grow"><div class="nm">' + esc(p.nome || p.email) + '</div><div class="muted">' + esc(NOMES[baseCargo(p.cargo)] || p.cargo) + ' · ' + fdh(p.criado) + (extra || "") + '</div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis">' + esc(p.email) + (p.telefone ? "" : " · sem telefone") + '</div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:6px;align-items:stretch">' + (z ? '<a class="zap" href="' + z + '" target="_blank" rel="noopener" data-zap="' + esc(p.email) + '" data-mot="' + motivo + '">WhatsApp</a>' : '') + marca + '</div></div>';
+}
+function grupo(titulo, dica, lista, motivo, extra){
+  var abertos = lista.filter(function(p){ return !contatoDe(p.email); }), chamados = lista.length - abertos.length;
+  var mostrar = MOSTRA_CHAMADOS ? lista : abertos;
+  return '<h2>' + titulo + ' (' + abertos.length + (chamados ? ' · ' + chamados + ' já chamado(s)' : '') + ')</h2>' + (dica ? '<p class="muted" style="margin:-4px 0 8px">' + dica + '</p>' : '') +
+    '<div class="people">' + (mostrar.length ? mostrar.slice(0, 200).map(function(p){ return pessoa(p, motivo, extra); }).join("") : '<div class="empty">Ninguém para chamar aqui.</div>') + '</div>';
 }
 function viewPessoas(){
-  var c = calc(), b = BUSCA.toLowerCase();
-  var compraram = {}; D.compras.forEach(function(x){ compraram[(x.email||"") + "|" + baseCargo(x.cargo)] = 1; compraram[x.email] = 1; });
+  var c = calc(), b = BUSCA.toLowerCase(), ini = inicioPer();
+  var compraram = {}; D.compras.forEach(function(x){ compraram[x.email] = 1; }); D.vendas.forEach(function(v){ if (v.status === "aprovada") compraram[v.email] = 1; });
   var tel = {}; D.vendas.forEach(function(v){ if (v.telefone) tel[v.email] = v.telefone; }); D.testes.forEach(function(t){ if (t.telefone) tel[t.email] = t.telefone; });
   function filtra(l){ return l.filter(function(p){ return !b || (String(p.nome||"") + " " + String(p.email||"")).toLowerCase().indexOf(b) >= 0; }); }
-  var naoComp = filtra(c.testes.filter(function(t){ return !compraram[t.email]; }));
-  var comp = filtra(c.compras).map(function(x){ return Object.assign({}, x, {telefone: x.telefone || tel[x.email] || ""}); });
-  var carr = filtra(c.carr.filter(function(v){ return !compraram[v.email]; }));
-  var h = periodos() + '<input class="inp" id="busca" placeholder="Buscar por nome ou e-mail" value="' + esc(BUSCA) + '">';
-  h += '<div class="cols"><div><h2>Testaram e não compraram (' + naoComp.length + ')</h2><div class="people">' + (naoComp.length ? naoComp.slice(0, 200).map(function(p){ return pessoa(p, false); }).join("") : '<div class="empty">Ninguém no período.</div>') + '</div>' +
-    (carr.length ? '<h2>Abandonaram o pagamento (' + carr.length + ')</h2><div class="people">' + carr.slice(0, 100).map(function(p){ return pessoa(p, false, ' · <span class="pill y">carrinho</span>'); }).join("") + '</div>' : '') + '</div>' +
-    '<div><h2>Compraram (' + comp.length + ')</h2><div class="people">' + (comp.length ? comp.slice(0, 200).map(function(p){ return pessoa(p, true); }).join("") : '<div class="empty">Nenhuma compra no período.</div>') + '</div>' +
-    (c.reemb.length ? '<h2>Reembolsos (' + c.reemb.length + ')</h2><div class="people">' + c.reemb.map(function(p){ return pessoa(p, true, ' · <span class="pill bad">reembolso</span>'); }).join("") + '</div>' : '') + '</div></div>';
-  h += '<p class="muted" style="margin-top:14px">O botão de WhatsApp aparece para quem tem telefone salvo (testes feitos a partir de hoje e compras registradas no painel).</p>';
+  function unico(l){ var v = {}; return l.filter(function(p){ if (v[p.email]) return false; v[p.email] = 1; return true; }); }
+  function comTel(l){ return l.map(function(x){ return Object.assign({}, x, {telefone: x.telefone || tel[x.email] || ""}); }); }
+  var exp = comTel(unico(filtra(D.vendas.filter(function(v){ return (v.status === "expirada" || v.status === "recusada") && dia(v.criado) >= ini && !compraram[v.email]; }))));
+  var carr = comTel(unico(filtra(c.carr.filter(function(v){ return !compraram[v.email]; }))));
+  var vistos = {}; exp.concat(carr).forEach(function(p){ vistos[p.email] = 1; });
+  var naoComp = comTel(unico(filtra(c.testes.filter(function(t){ return !compraram[t.email] && !vistos[t.email]; }))));
+  var comp = comTel(filtra(c.compras));
+  var h = periodos() + '<div class="form"><input class="inp" id="busca" placeholder="Buscar por nome ou e-mail" value="' + esc(BUSCA) + '"><label class="muted" style="display:flex;gap:6px;align-items:center;white-space:nowrap"><input type="checkbox" id="mc"' + (MOSTRA_CHAMADOS ? " checked" : "") + '> mostrar já chamados</label></div>';
+  h += '<div class="cols"><div>' +
+    grupo("1. Pagamento não concluído", "Pix que venceu ou cartão recusado. São os mais quentes: chame primeiro.", exp, "expirada", "") +
+    grupo("2. Abandonaram o pagamento", "Começaram a compra e saíram.", carr, "carrinho", ' · <span class="pill y">carrinho</span>') +
+    grupo("3. Testaram e não compraram", "", naoComp, "teste", "") + '</div>' +
+    '<div><h2>Compraram (' + comp.length + ')</h2><div class="people">' + (comp.length ? comp.slice(0, 200).map(function(p){ return pessoa(p, "comprou"); }).join("") : '<div class="empty">Nenhuma compra no período.</div>') + '</div>' +
+    (c.reemb.length ? '<h2>Reembolsos (' + c.reemb.length + ')</h2><div class="people">' + c.reemb.map(function(p){ return pessoa(p, "comprou", ' · <span class="pill bad">reembolso</span>'); }).join("") + '</div>' : '') + '</div></div>';
+  h += '<p class="muted" style="margin-top:14px">Ao tocar em WhatsApp, a pessoa já fica marcada como chamada. Quem compra sai sozinho das listas. O botão de WhatsApp aparece para quem tem telefone salvo.</p>';
   return h;
 }
 
@@ -330,6 +351,15 @@ function liga(){
   var bm = document.getElementById("bMeta");
   if (bm) bm.onclick = function(){ bm.disabled = true; document.getElementById("mE").textContent = "Buscando…";
     api("POST", {acao:"meta_atualizar", dias:30}).then(function(j){ document.getElementById("mE").textContent = j.msg === "ok" ? "Pronto: " + j.linhas + " linha(s)." : (j.msg || "Não deu."); if (j.msg === "ok") carrega(); }); };
+  var mc = document.getElementById("mc"); if (mc) mc.onchange = function(){ MOSTRA_CHAMADOS = mc.checked; render(); };
+  function marca(email, motivo, desfazer){
+    D.contatos = (D.contatos || []).filter(function(x){ return x.email !== email; });
+    if (!desfazer) D.contatos.push({email: email, quando: new Date().toISOString(), motivo: motivo});
+    api("POST", {acao:"contato", email: email, motivo: motivo, desfazer: !!desfazer});
+  }
+  document.querySelectorAll("[data-chamei]").forEach(function(b){ b.onclick = function(){ marca(b.dataset.chamei, b.dataset.mot); render(); }; });
+  document.querySelectorAll("[data-desfaz]").forEach(function(b){ b.onclick = function(){ marca(b.dataset.desfaz, "", true); render(); }; });
+  document.querySelectorAll("[data-zap]").forEach(function(a){ a.addEventListener("click", function(){ if (a.dataset.mot !== "comprou" && !contatoDe(a.dataset.zap)) { marca(a.dataset.zap, a.dataset.mot); setTimeout(render, 300); } }); });
   var fx = document.getElementById("fx");
   if (fx) fx.onchange = function(){ importa(fx.files[0]); };
 }
@@ -354,7 +384,7 @@ function importa(arq){
       out.textContent = "Enviando " + linhas.length + " linha(s)…";
       api("POST", {acao:"importar", linhas:linhas}).then(function(j){
         if (!j.ok){ out.textContent = j.msg || "Não deu para importar."; return; }
-        out.textContent = "Pronto: " + j.gravadas + " venda(s) gravada(s)" + (j.puladas ? ", " + j.puladas + " ignorada(s) (expiradas ou recusadas)" : "") + ".";
+        out.textContent = "Pronto: " + j.gravadas + " venda(s) gravada(s)" + (j.puladas ? ", " + j.puladas + " ignorada(s)" : "") + ".";
         carrega();
       });
     } catch (e) { out.textContent = "Não consegui ler esse arquivo. Exporte de novo em Excel (.xlsx)."; }
