@@ -752,7 +752,7 @@ function route() {
     case "comece": return viewComece(p[1]);
     case "instalar": return viewInstalar();
     default:
-      if (!ls("cnm_onb") && !P.onb) { if (GUEST) { marcaOnb(); const a0 = allAs().find(a => !a.bloq && (ASQ[a.code] || []).length); if (a0) return go("#/q/f/" + a0.code); } return go("#/comece"); }
+      if (!ls("cnm_onb") && !P.onb) return go("#/comece");
       return viewTrilha();
   }
 }
