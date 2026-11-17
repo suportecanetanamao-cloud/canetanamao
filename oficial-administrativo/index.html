@@ -18,7 +18,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2226%22 fill=%22%231D3FD8%22/%3E%3Cpath d=%22M66 31 A 25 25 0 1 0 66 69%22 fill=%22none%22 stroke=%22white%22 stroke-width=%2214%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2274%22 cy=%2250%22 r=%228.5%22 fill=%22%23FFC727%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="/oficial-administrativo/vsl.jpg" fetchpriority="high">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"></noscript>
 <style>
 body{margin:0;background:#F3F5FA}
 *{box-sizing:border-box}
@@ -46,6 +49,7 @@ p.l{margin:0;font-size:18px;color:#3B4568;max-width:720px}
 .tags{display:flex;flex-wrap:wrap;gap:8px}
 .tags span{background:#FFC727;color:#0B1747;font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px}
 .tags span.o{background:none;border:1.5px solid #6F86F0;color:#DCE3FF;padding:5px 12px}
+.hero h1 .h1s{display:block;margin-top:10px;font-size:.5em;line-height:1.25;font-weight:700;letter-spacing:0;color:#C9D2F2}.hero h1 .h1s b{color:#FFC727}
 .hero h1{margin:0;font-size:clamp(32px,4.6vw,52px);line-height:1.06;font-weight:800;letter-spacing:-.02em}
 .hero h1 b{color:#FFC727}
 .hero .sub{margin:0;font-size:19px;color:#C9D2F2;max-width:560px}.hero .sub b{color:#fff}
@@ -156,13 +160,13 @@ clarity('set','cargo','Oficial Administrativo');
 <div class="hero"><div class="w hero-row">
 <div class="hero-l">
 <div class="tags"><span>Concurso Prefeitura de Birigui-SP</span><span class="o">Prova em 14/02/2027</span></div>
-<h1>Estude só o que a <b>banca ACCESS</b> cobra para Oficial Administrativo de Birigui</h1>
+<h1>Pare de estudar no escuro.<span class="h1s">O app te mostra o que a <b>banca ACCESS</b> cobra para Oficial Administrativo de Birigui.</span></h1>
 <p class="sub">Um app que te diz o que estudar, na ordem do que mais cai, + a <b>apostila completa</b> do edital para baixar e imprimir. Só precisa de <b>ensino médio</b>.</p>
 <div class="buy"><a href="#oferta" class="cta">Quero o kit completo</a><div class="pr"><span>de <s>R$ 97</s> por</span><b>R$ 47,90</b></div></div>
 <div class="stats"><div><b>310</b><span>questões reais da ACCESS</span></div><div><b>44</b><span>assuntos do edital</span></div><div><b>App + PDF</b><span>trilha + apostila completa</span></div></div>
 </div>
 <div class="hero-v"><div class="vslw">
-<div class="vsl" id="vsl"><video id="vslv" src="/oficial-administrativo/vsl.mp4" poster="/oficial-administrativo/vsl.jpg" muted autoplay playsinline preload="metadata"></video>
+<div class="vsl" id="vsl"><video id="vslv" src="/oficial-administrativo/vsl.mp4" poster="/oficial-administrativo/vsl.jpg" muted playsinline preload="none"></video>
 <button class="vsl-som" id="vsls" type="button"><span>🔊</span>Toque para ouvir<small>o vídeo começa do início</small></button>
 <div class="vsl-pause"><b>▶</b></div><div class="vsl-bar"><i id="vslb"></i></div></div>
 <div class="vsl-cta" id="vslc"><a href="#oferta" class="cta">Quero o kit completo ›</a><small>🔒 Garantia de 7 dias: se não gostar, devolvemos 100%</small></div>
@@ -347,6 +351,8 @@ w.addEventListener('click',function(){if(!som){ativar();return}if(v.paused){v.pl
 v.addEventListener('timeupdate',function(){var d=v.duration||117.7,x=Math.min(1,v.currentTime/d);b.style.width=(100*(1-Math.pow(1-x,2.2)))+'%';
  if(!som){var r=v.getBoundingClientRect();if(r.top<window.innerHeight&&r.bottom>0)[25,50,75,95].forEach(function(m){if(x*100>=m&&!mu[m]){mu[m]=1;ev('VSL_mudo_'+m)}});return}if(v.currentTime>=CTA)c.classList.add('on');
  [25,50,75,95].forEach(function(m){if(x*100>=m&&!mk[m]){mk[m]=1;ev('VSL_'+m)}});});
+function auto(){setTimeout(function(){if(!som&&v.paused){v.muted=true;var p=v.play();if(p&&p.catch)p.catch(function(){})}},400)}
+if(document.readyState==='complete')auto();else window.addEventListener('load',auto);
 v.addEventListener('ended',function(){c.classList.add('on');if(!som){v.currentTime=0;v.play()}});
 // barra fixa: aparece depois do vídeo, some na oferta
 var bar=document.getElementById('bar'),of=document.getElementById('oferta'),hv=document.querySelector('.hero');
