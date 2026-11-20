@@ -390,7 +390,19 @@ function viewAssunto(code) {
 }
 
 // ---------- questões ----------
+// sessão em andamento fica salva no aparelho: se a pessoa sai e volta, continua de onde parou
+function sesKey() { return "cnm_ses_" + cargo; }
+function sesSave() { if (!SES) { ls(sesKey(), ""); return; } const o = Object.assign({}, SES); delete o.sel; o.ts = Date.now(); ls(sesKey(), JSON.stringify(o)); }
+function sesLoad(mode, arg) {
+  let s = null; try { s = JSON.parse(ls(sesKey()) || "null"); } catch (e) {}
+  if (!s || s.mode !== mode || String(s.arg) !== String(arg) || !Array.isArray(s.ids) || !s.ids.length) return null;
+  if (Date.now() - (s.ts || 0) > 14 * 864e5 || !s.ids.every(id => BY[id])) return null;
+  s.res = s.res || {}; s.i = Math.min(Math.max(0, s.i || 0), s.ids.length - 1);
+  return s;
+}
 function startSession(mode, arg) {
+  const salva = sesLoad(mode, arg);
+  if (salva) { SES = salva; if (Object.keys(SES.res).length) toast("Continuando de onde você parou"); return renderQ(); }
   let ids = [], title = "";
   if (mode === "a") { ids = (ASQ[arg] || []).slice(); title = AS[arg] ? AS[arg].titulo : "Questões"; }
   else if (mode === "erros") { ids = arg === "hoje" ? redoToday() : arg && arg !== "todos" ? wrongIds().filter(id => BY[id].a === arg || BY[id].m === arg) : wrongIds(); title = "Refazer erradas"; ids.sort((x, y) => BY[x].num - BY[y].num); }
@@ -417,7 +429,11 @@ function startSession(mode, arg) {
   }
   else if (mode === "bloco") { const bl = blocos()[+arg] || []; ids = shuffle(bl.filter(c => passed(c) && hasQ(c)).flatMap(c => pick(ASQ[c] || [], 2))); title = "Baú do bloco " + (+arg + 1); }
   if (!ids.length) { toast("Nenhuma questão aqui."); return go("#/hoje"); }
-  SES = { mode, arg, ids, i: 0, res: {}, title, t0: Date.now(), codes, xp: 0 };
+  let i0 = 0;
+  if (mode === "a") { const k = ids.findIndex(id => !P.ans[id]); i0 = k > 0 ? k : 0; }
+  SES = { mode, arg, ids, i: i0, res: {}, title, t0: Date.now(), codes, xp: 0 };
+  sesSave();
+  if (i0) toast("Continuando da questão " + (i0 + 1));
   renderQ();
 }
 
@@ -449,11 +465,11 @@ function renderQ() {
     S.res[id] = { a: S.sel, ok: right, frase: right ? sorteia(ELOGIO) : sorteia(CONSOLO), combo: right ? COMBO[S.combo] || "" : "" };
     const prev = P.ans[id]; P.ans[id] = { a: S.sel, ok: right, t: Date.now(), n: (prev ? prev.n || 1 : 0) + 1, everWrong: !!(prev && (!prev.ok || prev.everWrong)) || !right };
     addXP(right ? XP.certa : XP.errada);
-    S.sel = null; save(); renderQ();
+    S.sel = null; save(); sesSave(); renderQ();
     setTimeout(() => { const f = document.querySelector(".fb"); if (f) f.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 50);
   };
-  const nx = document.getElementById("bNext"); if (nx) nx.onclick = () => { if (last) return summary(); S.i++; S.sel = null; renderQ(); };
-  const pv = document.getElementById("bPrev"); if (pv) pv.onclick = () => { S.i--; S.sel = null; renderQ(); };
+  const nx = document.getElementById("bNext"); if (nx) nx.onclick = () => { if (last) return summary(); S.i++; S.sel = null; sesSave(); renderQ(); };
+  const pv = document.getElementById("bPrev"); if (pv) pv.onclick = () => { S.i--; S.sel = null; sesSave(); renderQ(); };
   const tx = document.getElementById("bTx"); if (tx) tx.onclick = () => sheet("Texto · " + C.textos[q.tx].src, C.textos[q.tx].html);
 }
 
@@ -509,7 +525,7 @@ function summary() {
   ${TRIAL && (S.mode === "a" || S.mode === "f") && a && a.nqk > (ASQ[code] || []).length ? `<div class="card trial" style="margin-top:14px;text-align:left"><b>Gostou?</b> No kit completo este assunto tem ${a.nqk} questões, e o app inteiro tem ${C.nq_total || ""} questões em ${allAs().length} assuntos.<a class="btn b full" style="margin-top:10px" href="${esc(C.checkout || C.site || CFG.SITE)}" target="_blank" rel="noopener">Quero o kit completo</a></div>` : ""}
   <div class="stack">${btns}</div></div>`, backTop("Resultado", "", "#/hoje"));
   const ag = document.getElementById("bAgain"); if (ag) ag.onclick = () => startSession("f", code);
-  SES = null;
+  SES = null; sesSave();
   checaMedalhas();
   if (TRIAL) setTimeout(() => ofertaTrial(ok, r.length), 1200);
   if (P._lvup) { const nv = nivel(); delete P._lvup; save(); const old = document.querySelector(".sheet .bd"); const html = `<div class="lvup"><div class="lvn">${nv.n}</div><div style="font-weight:800;font-size:20px;margin-top:10px">Subiu de nível! 🎉</div><div class="muted" style="font-size:16px">Agora você é <b style="color:var(--blue)">${esc(nv.nome)}</b></div>${nv.prox ? `<p class="muted">Próximo nível: ${esc(nv.prox)} (${nv.ate.toLocaleString("pt-BR")} XP)</p>` : ""}</div>`;
