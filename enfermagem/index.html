@@ -388,7 +388,7 @@ function setCargo(c,user){
  if(user){ls('cnm_cargo',c); try{clarity('set','cargo',k.cl);clarity('event','escolheu_'+c)}catch(x){} try{fbq('trackCustom','EscolheuCargo',{cargo:c})}catch(x){}}
 }
 document.querySelectorAll('.cb').forEach(function(b){b.addEventListener('click',function(){setCargo(b.dataset.set,true)})});
-var q=(location.search.match(/[?&]c=(tec|enf)/)||[])[1]; if(q)setCargo(q,false); else {var s=ls('cnm_cargo'); if(s==='tec'||s==='enf')setCargo(s,false);}
+var q=(location.search.match(/[?&]c=(tec|enf)/)||[])[1]; if(q)setCargo(q,false);
 /* formulário do teste grátis (pergunta o cargo) */
 var pop=document.getElementById('pop');
 function fecha(){pop.style.display='none';}
