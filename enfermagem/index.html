@@ -10,6 +10,7 @@
 <meta property="og:image" content="https://www.canetanamao.com.br/enfermeiro/img/og.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2226%22 fill=%22%231D3FD8%22/%3E%3Cpath d=%22M66 31 A 25 25 0 1 0 66 69%22 fill=%22none%22 stroke=%22white%22 stroke-width=%2214%22 stroke-linecap=%22round%22/%3E%3Ccircle cx=%2274%22 cy=%2250%22 r=%228.5%22 fill=%22%23FFC727%22/%3E%3C/svg%3E">
+<link rel="preload" as="image" href="/enfermeiro/vsl.jpg" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
 <style>
@@ -133,6 +134,8 @@ ul.ck li{display:flex;gap:10px;align-items:flex-start}ul.ck svg{flex-shrink:0;ma
 }
 
 [hidden]{display:none!important}
+.hero-l .pick{max-width:none}
+@media (max-width:860px){.hero-l>.pick{order:4}.hero-l>.sub{order:5}.hero-l>.stats{order:6}.hero-v{order:3}}
 /* escolha do cargo */
 .pick{background:#fff;color:#0B1747;border-radius:24px;padding:22px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:100%;max-width:460px}
 .pick>b{font-size:20px;line-height:1.2}
@@ -195,11 +198,8 @@ clarity('set','cargo','Enfermagem');
 <div class="tags"><span>Concurso Prefeitura de Birigui-SP</span><span class="o">Prova em 14/02/2027</span></div>
 <h1>Pare de estudar no escuro.<span class="h1s">O app te mostra o que a <b>banca ACCESS</b> cobra para a <b>Enfermagem</b> de Birigui.</span></h1>
 <p class="sub">Um app que te diz o que estudar, na ordem do que mais cai, + a <b>apostila completa</b> do edital para baixar e imprimir. Tem kit para <b>Técnico(a) em Enfermagem</b> e para <b>Enfermeiro(a)</b>, 30h e ESF.</p>
-<div class="stats"><div><b>345</b><span>questões reais · Técnico</span></div><div><b>420</b><span>questões reais · Enfermeiro</span></div><div><b>App + PDF</b><span>trilha + apostila completa</span></div></div>
-</div>
-<div class="hero-v">
 <div class="pick" id="pick">
-<b>Primeiro, escolha o seu cargo:</b>
+<b>Escolha o seu cargo:</b>
 <small>Cada kit tem o conteúdo e as questões do edital do seu cargo.</small>
 <div class="pb">
 <button type="button" class="cb" data-set="tec" aria-pressed="false"><span class="ic">🩺</span><span class="tx"><b>Sou Técnico(a) em Enfermagem</b><i>nível médio · 30h e ESF</i></span><span class="rd"></span></button>
@@ -212,7 +212,14 @@ clarity('set','cargo','Enfermagem');
 <span class="gt">🔒 Garantia de 7 dias · acesso vitalício</span>
 </div>
 </div>
+<div class="stats"><div><b>345</b><span>questões reais · Técnico</span></div><div><b>420</b><span>questões reais · Enfermeiro</span></div><div><b>App + PDF</b><span>trilha + apostila completa</span></div></div>
 </div>
+<div class="hero-v"><div class="vslw">
+<div class="vsl" id="vsl"><video id="vslv" src="/enfermagem/vsl.mp4" poster="/enfermeiro/vsl.jpg" muted playsinline preload="none"></video>
+<button class="vsl-som" id="vsls" type="button"><span>🔊</span>Toque para ouvir<small>o vídeo começa do início</small></button>
+<div class="vsl-pause"><b>▶</b></div><div class="vsl-bar"><i id="vslb"></i></div></div>
+<div class="vsl-cta" id="vslc"><a href="#pick" class="cta">Escolher meu kit ›</a><small>🔒 Garantia de 7 dias: se não gostar, devolvemos 100%</small></div>
+</div></div>
 </div></div>
 <!-- APP -->
 <div class="w app">
@@ -417,6 +424,23 @@ document.querySelectorAll('.form-amostra').forEach(function(f){
 var bar=document.getElementById('bar'),of=document.getElementById('oferta'),hv=document.querySelector('.hero');
 function chk(){var r=hv.getBoundingClientRect(),o=of.getBoundingClientRect(),vh=window.innerHeight;bar.classList.toggle('on',r.bottom<vh*0.35&&!(o.top<vh&&o.bottom>0));}
 window.addEventListener('scroll',chk,{passive:true});window.addEventListener('resize',chk);chk();
+/* VSL */
+(function(){
+var w=document.getElementById('vsl'),v=document.getElementById('vslv'),s=document.getElementById('vsls'),b=document.getElementById('vslb'),c=document.getElementById('vslc');
+var CTA=110.3,som=false,mk={},mu={};
+function ev(n){try{if(window.fbq)fbq('trackCustom',n,{pagina:'enfermagem'})}catch(e){}try{if(window.clarity)clarity('event',n)}catch(e){}}
+function st(){window.__vslAtivo=som&&!v.paused&&!v.ended}
+function ativar(e){if(e)e.stopPropagation();som=true;s.style.display='none';v.muted=false;v.currentTime=0;var p=v.play();if(p&&p.catch)p.catch(function(){});w.classList.remove('pausado');ev('VSL_som')}
+s.addEventListener('click',ativar);
+w.addEventListener('click',function(){if(!som){ativar();return}if(v.paused){v.play();w.classList.remove('pausado')}else{v.pause();w.classList.add('pausado')}});
+['play','pause','ended'].forEach(function(n){v.addEventListener(n,st)});
+v.addEventListener('timeupdate',function(){var d=v.duration||117.7,x=Math.min(1,v.currentTime/d);b.style.width=(100*(1-Math.pow(1-x,2.2)))+'%';
+ if(!som){var r=v.getBoundingClientRect();if(r.top<window.innerHeight&&r.bottom>0)[25,50,75,95].forEach(function(m){if(x*100>=m&&!mu[m]){mu[m]=1;ev('VSL_mudo_'+m)}});return}if(v.currentTime>=CTA)c.classList.add('on');
+ [25,50,75,95].forEach(function(m){if(x*100>=m&&!mk[m]){mk[m]=1;ev('VSL_'+m)}});});
+function auto(){setTimeout(function(){if(!som&&v.paused){v.muted=true;var p=v.play();if(p&&p.catch)p.catch(function(){})}},400)}
+if(document.readyState==='complete')auto();else window.addEventListener('load',auto);
+v.addEventListener('ended',function(){c.classList.add('on');if(!som){v.currentTime=0;v.play()}});
+})();
 /* checkout */
 document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="lastlink.com"]');if(!a)return;var c=a.href.indexOf('CE5C4624A')>=0?'tec':'enf';
  try{fbq('track','InitiateCheckout',{value:K[c].v,currency:'BRL',content_category:c})}catch(x){}try{clarity('event','clicou_comprar_'+c)}catch(x){}},true);
